@@ -28,8 +28,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Gerakan kiri kanan untuk platformer
-        Vector3 right = transform.TransformDirection(Vector3.right);
+        // Gerakan kiri kanan untuk platformer (Gunakan Global Right agar tidak terbalik saat rotasi)
+        Vector3 right = Vector3.right;
         
         // Press Left Shift to run
         bool isRunning = Input.GetKey(KeyCode.LeftShift);

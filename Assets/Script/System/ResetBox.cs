@@ -5,6 +5,7 @@ public class ResetBox : MonoBehaviour
     [Header("Interaction Settings")]
     [SerializeField] private KeyCode interactKey = KeyCode.E;
     [SerializeField] private string playerTag = "Player";
+    [SerializeField] private float interactionRadius = 2f; // Jarak interaksi (radius)
     
     [Header("Visual Feedback")]
     [SerializeField] private GameObject interactionPrompt; // Optional UI prompt
@@ -16,6 +17,7 @@ public class ResetBox : MonoBehaviour
     private PlayerPlatformInteractor playerInteractor;
     private Renderer boxRenderer;
     private Color originalColor;
+    private BoxCollider triggerCollider; // Reference to trigger collider
 
     void Start()
     {
@@ -25,10 +27,63 @@ public class ResetBox : MonoBehaviour
             originalColor = boxRenderer.material.color;
         }
 
+        // Setup or find trigger collider
+        SetupTriggerCollider();
+
         // Hide interaction prompt at start
         if (interactionPrompt != null)
         {
             interactionPrompt.SetActive(false);
+        }
+    }
+
+    private void SetupTriggerCollider()
+    {
+        // Find all box colliders on this GameObject
+        BoxCollider[] colliders = GetComponents<BoxCollider>();
+        
+        // Look for existing trigger collider
+        foreach (BoxCollider col in colliders)
+        {
+            if (col.isTrigger)
+            {
+                triggerCollider = col;
+                break;
+            }
+        }
+        
+        // If no trigger collider found, create one
+        if (triggerCollider == null)
+        {
+            triggerCollider = gameObject.AddComponent<BoxCollider>();
+            triggerCollider.isTrigger = true;
+            Debug.Log("Created new trigger collider for ResetBox");
+        }
+        
+        // Set trigger size based on interaction radius
+        UpdateTriggerSize();
+    }
+
+    private void UpdateTriggerSize()
+    {
+        if (triggerCollider != null)
+        {
+            // Make trigger larger than the box itself
+            Vector3 baseSize = Vector3.one; // Default size
+            
+            // Try to get size from non-trigger collider if exists
+            BoxCollider[] colliders = GetComponents<BoxCollider>();
+            foreach (BoxCollider col in colliders)
+            {
+                if (!col.isTrigger)
+                {
+                    baseSize = col.size;
+                    break;
+                }
+            }
+            
+            // Expand trigger based on interaction radius
+            triggerCollider.size = baseSize + Vector3.one * (interactionRadius * 0.5f);
         }
     }
 
@@ -132,11 +187,36 @@ public class ResetBox : MonoBehaviour
     {
         // Visualize the trigger area in editor
         Gizmos.color = new Color(0, 1, 0, 0.3f);
-        BoxCollider trigger = GetComponent<BoxCollider>();
-        if (trigger != null && trigger.isTrigger)
+        
+        // Get the trigger collider
+        BoxCollider[] colliders = GetComponents<BoxCollider>();
+        BoxCollider trigger = null;
+        foreach (BoxCollider col in colliders)
+        {
+            if (col.isTrigger)
+            {
+                trigger = col;
+                break;
+            }
+        }
+        
+        if (trigger != null)
         {
             Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.DrawCube(trigger.center, trigger.size);
+            
+            // Draw wireframe to show interaction range
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireCube(trigger.center, trigger.size);
+        }
+    }
+    
+    // Update trigger size when interaction radius changes in editor
+    private void OnValidate()
+    {
+        if (Application.isPlaying && triggerCollider != null)
+        {
+            UpdateTriggerSize();
         }
     }
 }
