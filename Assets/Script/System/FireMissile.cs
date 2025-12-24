@@ -48,7 +48,16 @@ public class FireMissile : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             Debug.Log("Player kena api → MATI");
-            Destroy(other.gameObject);
+            RespawnManager respawnManager = other.GetComponent<RespawnManager>();
+            if (respawnManager != null)
+            {
+                respawnManager.TriggerDeath();
+            }
+            else
+            {
+                Debug.LogWarning("Player tidak memiliki RespawnManager! Player akan di-destroy.");
+                Destroy(other.gameObject);
+            }
             Destroy(gameObject);
             return;
         }

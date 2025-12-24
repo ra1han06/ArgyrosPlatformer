@@ -111,7 +111,16 @@ public class PlatformHazard : MonoBehaviour
             if (hit.CompareTag("Player"))
             {
                 Debug.Log($"Active Detection: Player terdeteksi di platform berbahaya '{gameObject.name}' → MATI");
-                Destroy(hit.gameObject);
+                RespawnManager respawnManager = hit.GetComponent<RespawnManager>();
+                if (respawnManager != null)
+                {
+                    respawnManager.TriggerDeath();
+                }
+                else
+                {
+                    Debug.LogWarning("Player tidak memiliki RespawnManager! Player akan di-destroy.");
+                    Destroy(hit.gameObject);
+                }
                 return;
             }
         }
@@ -122,7 +131,15 @@ public class PlatformHazard : MonoBehaviour
         if (isDanger && other.CompareTag("Player"))
         {
             Debug.Log("Player injak platform panas (TriggerEnter) → MATI");
-            Destroy(other.gameObject);
+            RespawnManager respawnManager = other.GetComponent<RespawnManager>();
+            if (respawnManager != null)
+            {
+                respawnManager.TriggerDeath();
+            }
+            else
+            {
+                Destroy(other.gameObject);
+            }
         }
     }
 
@@ -132,7 +149,15 @@ public class PlatformHazard : MonoBehaviour
         if (isDanger && collision.gameObject.CompareTag("Player"))
         {
             Debug.Log("Player injak platform panas (CollisionEnter) → MATI");
-            Destroy(collision.gameObject);
+            RespawnManager respawnManager = collision.gameObject.GetComponent<RespawnManager>();
+            if (respawnManager != null)
+            {
+                respawnManager.TriggerDeath();
+            }
+            else
+            {
+                Destroy(collision.gameObject);
+            }
         }
     }
 
@@ -142,7 +167,15 @@ public class PlatformHazard : MonoBehaviour
         if (isDanger && other.CompareTag("Player"))
         {
             Debug.Log("Player masih di platform panas (TriggerStay) → MATI");
-            Destroy(other.gameObject);
+            RespawnManager respawnManager = other.GetComponent<RespawnManager>();
+            if (respawnManager != null)
+            {
+                respawnManager.TriggerDeath();
+            }
+            else
+            {
+                Destroy(other.gameObject);
+            }
         }
     }
 
@@ -152,7 +185,15 @@ public class PlatformHazard : MonoBehaviour
         if (isDanger && collision.gameObject.CompareTag("Player"))
         {
             Debug.Log("Player masih di platform panas (CollisionStay) → MATI");
-            Destroy(collision.gameObject);
+            RespawnManager respawnManager = collision.gameObject.GetComponent<RespawnManager>();
+            if (respawnManager != null)
+            {
+                respawnManager.TriggerDeath();
+            }
+            else
+            {
+                Destroy(collision.gameObject);
+            }
         }
     }
 }
