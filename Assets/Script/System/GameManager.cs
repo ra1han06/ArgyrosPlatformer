@@ -36,6 +36,10 @@ public class GameManager : MonoBehaviour
     [Tooltip("Jumlah kematian di level saat ini")]
     public int deathCount = 0;
 
+    [Header("=== SAVE DATA ===")]
+    [Tooltip("Current save data - loaded from SaveSystem")]
+    public GameSaveData currentSave;
+
     [Header("=== TIMER STATUS ===")]
     [Tooltip("Status timer sedang berjalan atau tidak")]
     [SerializeField] private bool isTimerRunning = false;
@@ -63,6 +67,9 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // Load save data
+        LoadProgress();
 
         if (showDebugLog)
             Debug.Log("[GameManager] Singleton created and persisted across scenes");
@@ -220,6 +227,7 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// Dipanggil saat player mencapai finish line.
     /// Stop timer dan save best record jika lebih baik dari sebelumnya.
+    /// Unlock level berikutnya.
     /// </summary>
     public void CompleteLevel()
     {
@@ -234,6 +242,9 @@ public class GameManager : MonoBehaviour
 
         // Save best record
         SaveBestRecord();
+        
+        // Unlock level berikutnya
+        UnlockNextLevel();
     }
 
     // =====================================================
@@ -283,6 +294,43 @@ public class GameManager : MonoBehaviour
         }
 
         PlayerPrefs.Save();
+        
+        // Save progress to save system
+        SaveProgress();
+    }
+    
+    /// <summary>
+    /// Unlock level berikutnya di save data
+    /// </summary>
+    private void UnlockNextLevel()
+    {
+        int nextLevelIndex = currentLevelIndex; // Array index (0-based untuk level 2, dst)
+        
+        // Validasi: pastikan tidak unlock lebih dari jumlah level
+        if (nextLevelIndex >= currentSave.unlockedLevels.Length)
+        {
+            if (showDebugLog)
+                Debug.Log($"[GameManager] Level {currentLevelIndex} adalah level terakhir.");
+            return;
+        }
+        
+        // Set current level sebagai completed
+        if (currentLevelIndex - 1 >= 0 && currentLevelIndex - 1 < currentSave.completedLevels.Length)
+        {
+            currentSave.completedLevels[currentLevelIndex - 1] = true;
+        }
+        
+        // Unlock level berikutnya (jika belum)
+        if (!currentSave.unlockedLevels[nextLevelIndex])
+        {
+            currentSave.unlockedLevels[nextLevelIndex] = true;
+            
+            if (showDebugLog)
+                Debug.Log($"[GameManager] 🔓 Level {nextLevelIndex + 1} UNLOCKED!");
+        }
+        
+        // Save progress
+        SaveProgress();
     }
 
     /// <summary>
@@ -342,5 +390,82 @@ public class GameManager : MonoBehaviour
     public bool IsTimerRunning()
     {
         return isTimerRunning;
+    }
+
+    // =====================================================
+    // SAVE SYSTEM INTEGRATION
+    // =====================================================
+
+    /// <summary>
+    /// Load progress dari SaveSystem
+    /// Dipanggil di Awake() saat GameManager pertama kali dibuat
+    /// </summary>
+    private void LoadProgress()
+    {
+        // Cek apakah ada save file
+        if (SaveSystem.HasSaveFile())
+        {
+            // Load save data
+            currentSave = SaveSystem.LoadGame();
+
+            if (currentSave != null)
+            {
+                if (showDebugLog)
+                {
+                    Debug.Log("[GameManager] Save data loaded successfully!");
+                    Debug.Log($"[GameManager] Last Played Level: {currentSave.lastPlayedLevel}");
+                    Debug.Log($"[GameManager] Total Play Time: {currentSave.totalPlayTime:F1}s");
+                }
+            }
+            else
+            {
+                // Failed to load - create new save
+                Debug.LogWarning("[GameManager] Failed to load save data. Creating new save.");
+                currentSave = new GameSaveData();
+            }
+        }
+        else
+        {
+            // No save file - create new save data
+            if (showDebugLog)
+                Debug.Log("[GameManager] No save file found. Creating new save data.");
+            
+            currentSave = new GameSaveData();
+        }
+    }
+
+    /// <summary>
+    /// Save progress ke SaveSystem
+    /// Dipanggil saat level selesai (CompleteLevel)
+    /// </summary>
+    public void SaveProgress()
+    {
+        if (currentSave == null)
+        {
+            Debug.LogError("[GameManager] Cannot save progress - currentSave is null!");
+            return;
+        }
+
+        // Update last played level
+        currentSave.lastPlayedLevel = currentLevelIndex;
+
+        // Update total play time (tambahkan waktu level saat ini)
+        currentSave.totalPlayTime += levelTimer;
+
+        // Mark level as completed (index = currentLevelIndex - 1)
+        int levelArrayIndex = currentLevelIndex - 1;
+        if (levelArrayIndex >= 0 && levelArrayIndex < currentSave.completedLevels.Length)
+        {
+            currentSave.completedLevels[levelArrayIndex] = true;
+        }
+
+        // Save to disk
+        SaveSystem.SaveGame(currentSave);
+
+        if (showDebugLog)
+        {
+            Debug.Log($"[GameManager] Progress saved! Last Level: {currentSave.lastPlayedLevel}");
+            Debug.Log($"[GameManager] Total Play Time: {currentSave.totalPlayTime:F1}s");
+        }
     }
 }

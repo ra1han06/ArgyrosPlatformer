@@ -74,7 +74,39 @@ public class CompleteSceneHandler : MonoBehaviour
         // Validasi references
         ValidateReferences();
 
-        // Display stats
+        // Display stats dengan retry untuk wait GameManager instance
+        StartCoroutine(DisplayStatsWhenReady());
+    }
+
+    // =====================================================
+    // DISPLAY STATS WITH RETRY
+    // =====================================================
+    /// <summary>
+    /// Wait untuk GameManager instance ready, lalu display stats
+    /// </summary>
+    private System.Collections.IEnumerator DisplayStatsWhenReady()
+    {
+        // Wait hingga GameManager instance ada (max 3 detik)
+        float timeout = 3f;
+        float elapsed = 0f;
+
+        while (GameManager.Instance == null && elapsed < timeout)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        // Check apakah GameManager sudah ditemukan
+        if (GameManager.Instance == null)
+        {
+            Debug.LogError("[CompleteSceneHandler] GameManager.Instance tidak ditemukan setelah 3 detik! Pastikan GameManager dibuat di MainMenu scene dengan DontDestroyOnLoad.");
+            
+            // Display default/placeholder values
+            DisplayDefaultStats();
+            yield break;
+        }
+
+        // GameManager ditemukan - display stats normal
         DisplayStats();
     }
 
@@ -199,6 +231,44 @@ public class CompleteSceneHandler : MonoBehaviour
                 bestDeathsText.text = string.Format(bestDeathsFormat, "---");
             }
 
+            bestDeathsText.color = bestStatsColor;
+        }
+    }
+
+    // =====================================================
+    // DISPLAY DEFAULT STATS (FALLBACK)
+    // =====================================================
+    /// <summary>
+    /// Display default placeholder values ketika GameManager tidak ditemukan
+    /// </summary>
+    private void DisplayDefaultStats()
+    {
+        if (showDebugLog)
+            Debug.LogWarning("[CompleteSceneHandler] Displaying default stats karena GameManager tidak ada.");
+
+        // Current stats - tampilkan placeholder
+        if (currentTimeText != null)
+        {
+            currentTimeText.text = string.Format(currentTimeFormat, "00:00:00");
+            currentTimeText.color = currentStatsColor;
+        }
+
+        if (currentDeathsText != null)
+        {
+            currentDeathsText.text = string.Format(currentDeathsFormat, 0);
+            currentDeathsText.color = currentStatsColor;
+        }
+
+        // Best stats - tampilkan "---"
+        if (bestTimeText != null)
+        {
+            bestTimeText.text = string.Format(bestTimeFormat, "---");
+            bestTimeText.color = bestStatsColor;
+        }
+
+        if (bestDeathsText != null)
+        {
+            bestDeathsText.text = string.Format(bestDeathsFormat, "---");
             bestDeathsText.color = bestStatsColor;
         }
     }

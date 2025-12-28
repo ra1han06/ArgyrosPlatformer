@@ -142,23 +142,61 @@ public class SceneController : MonoBehaviour
         if (currentScene == "Pause")
         {
             Debug.Log("[SceneController] Resume → Close Pause Menu");
-            // TODO: Resume game logic - unload pause scene additively or Time.timeScale = 1
             Time.timeScale = 1f; // Resume time
             SceneManager.UnloadSceneAsync("Pause");
         }
         else
         {
-            // Main Menu: Continue to level selection
-            Debug.Log("[SceneController] Continue → SelectLevel");
-            LoadScene(SELECT_LEVEL);
+            // Main Menu: Continue → Load save dan pergi ke SELECT LEVEL
+            Debug.Log("[SceneController] Continue → Load save & go to SelectLevel");
+            
+            // Load save data
+            GameSaveData saveData = SaveSystem.LoadGame();
+            
+            if (saveData != null)
+            {
+                // Load save ke GameManager
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.currentSave = saveData;
+                    Debug.Log($"[SceneController] ✅ Save loaded - Last played: Level {saveData.lastPlayedLevel}");
+                }
+                
+                // Pergi ke SelectLevel (bukan langsung ke level)
+                LoadScene(SELECT_LEVEL);
+            }
+            else
+            {
+                // Fallback: jika save data tidak ada, pergi ke SelectLevel
+                Debug.LogWarning("[SceneController] No save data found! Going to SelectLevel with default.");
+                LoadScene(SELECT_LEVEL);
+            }
         }
     }
 
     public void OnNewGameButtonClicked()
     {
-        Debug.Log("[SceneController] New Game → SelectLevel");
-        PlayerPrefs.DeleteKey("HasSaveFile");
-        PlayerPrefs.Save();
+        Debug.Log("[SceneController] New Game → TOTAL RESET & SelectLevel");
+        
+        // HAPUS SEMUA DATA (Total Reset)
+        SaveSystem.DeleteAllData();
+        
+        // Buat save data baru dengan default values
+        GameSaveData newSave = new GameSaveData();
+        // Constructor sudah set Level 1 unlocked, lastPlayedLevel = 1
+        
+        // Simpan save baru
+        SaveSystem.SaveGame(newSave);
+        
+        // Load save ke GameManager
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.currentSave = newSave;
+            GameManager.Instance.currentLevelIndex = 1;
+            Debug.Log("[SceneController] ✅ Fresh save created - Only Level 1 unlocked");
+        }
+        
+        // Pergi ke SelectLevel
         LoadScene(SELECT_LEVEL);
     }
 

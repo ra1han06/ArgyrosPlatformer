@@ -47,6 +47,13 @@ public class LevelButtonHandler : MonoBehaviour
     
     [Tooltip("TextMeshProUGUI untuk menampilkan best deaths")]
     public TextMeshProUGUI bestDeathsText;
+    
+    [Header("=== Lock/Unlock UI ===")]
+    [Tooltip("GameObject untuk ikon locked (aktifkan saat level terkunci)")]
+    public GameObject lockedIcon;
+    
+    [Tooltip("Apakah disable button saat level terkunci?")]
+    public bool disableWhenLocked = true;
 
     [Header("=== Format Settings ===")]
     [Tooltip("Format untuk best time (contoh: 'Best: {0}')")]
@@ -88,8 +95,61 @@ public class LevelButtonHandler : MonoBehaviour
         
         Debug.Log($"[LevelButtonHandler] Button '{gameObject.name}' siap! → akan load scene '{levelSceneName}'");
         
+        // Check lock/unlock status
+        UpdateLockStatus();
+        
         // Load dan display best record
         LoadBestRecord();
+    }
+    
+    // =====================================================
+    // UPDATE LOCK STATUS
+    // =====================================================
+    /// <summary>
+    /// Check apakah level ini unlocked, lalu update UI dan button state
+    /// </summary>
+    private void UpdateLockStatus()
+    {
+        // Check apakah level unlocked dari SaveSystem
+        bool isUnlocked = IsLevelUnlocked();
+        
+        // Update locked icon
+        if (lockedIcon != null)
+        {
+            lockedIcon.SetActive(!isUnlocked); // Tampilkan icon saat LOCKED
+        }
+        
+        // Update button interactable state
+        if (disableWhenLocked && button != null)
+        {
+            button.interactable = isUnlocked;
+        }
+        
+        Debug.Log($"[LevelButtonHandler] Level {levelNumber} - Unlocked: {isUnlocked}");
+    }
+    
+    /// <summary>
+    /// Check apakah level ini sudah unlocked berdasarkan save data
+    /// </summary>
+    private bool IsLevelUnlocked()
+    {
+        // Level 1 selalu unlocked
+        if (levelNumber == 1)
+            return true;
+        
+        // Check dari GameManager save data
+        if (GameManager.Instance != null && GameManager.Instance.currentSave != null)
+        {
+            int arrayIndex = levelNumber - 1; // Convert ke 0-based index
+            
+            if (arrayIndex >= 0 && arrayIndex < GameManager.Instance.currentSave.unlockedLevels.Length)
+            {
+                return GameManager.Instance.currentSave.unlockedLevels[arrayIndex];
+            }
+        }
+        
+        // Default: locked (kecuali level 1)
+        return false;
     }
 
     // =====================================================
@@ -177,6 +237,13 @@ public class LevelButtonHandler : MonoBehaviour
     /// </summary>
     private void OnLevelButtonClicked()
     {
+        // Check apakah level unlocked
+        if (!IsLevelUnlocked())
+        {
+            Debug.LogWarning($"[LevelButtonHandler] Level {levelNumber} masih terkunci!");
+            return;
+        }
+        
         Debug.Log($"[LevelButtonHandler] Button Level {levelNumber} diklik!");
         
         // Set current level index di GameManager
