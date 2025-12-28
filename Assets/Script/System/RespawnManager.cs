@@ -64,6 +64,10 @@ public class RespawnManager : MonoBehaviour
         if (isDead) return;
         
         isDead = true;
+        
+        // Increment death counter in GameManager
+        GameManager.Instance?.IncrementDeaths();
+        
         Debug.Log("Player mati! Respawn dalam " + respawnDelay + " detik...");
         
         // Disable player control

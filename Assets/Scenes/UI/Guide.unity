@@ -271,7 +271,7 @@ MonoBehaviour:
   m_text: Move thy Knight rightward with steady stride.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
-  m_sharedMaterial: {fileID: 1028886662521247919, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
+  m_sharedMaterial: {fileID: -6720005094572700784, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -306,6 +306,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: -3
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -407,7 +408,7 @@ MonoBehaviour:
   m_text: Move thy Knight leftward across the land.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
-  m_sharedMaterial: {fileID: 1028886662521247919, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
+  m_sharedMaterial: {fileID: -6720005094572700784, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -442,6 +443,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: -3
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -483,6 +485,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 159351342}
   m_CullTransparentMesh: 1
+--- !u!1 &264977660
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 264977662}
+  - component: {fileID: 264977661}
+  m_Layer: 0
+  m_Name: SceneAudio
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &264977661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 264977660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1bea140e5dfd6c40b5998b72a2f8c7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneAudioInitializer
+  sceneType: 0
+--- !u!4 &264977662
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 264977660}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &314012933
 GameObject:
   m_ObjectHideFlags: 0
@@ -707,6 +754,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneController
   customReturnScene: 
+  buttonClickSound: {fileID: 0}
+  backgroundMusic: {fileID: 0}
 --- !u!4 &643777208
 Transform:
   m_ObjectHideFlags: 0
@@ -782,7 +831,7 @@ MonoBehaviour:
   m_text: Summon the copied platform into the realm once more.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
-  m_sharedMaterial: {fileID: 1028886662521247919, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
+  m_sharedMaterial: {fileID: -6720005094572700784, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -817,6 +866,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: -3
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1038,14 +1088,14 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1151165004}
   m_Enabled: 1
-  serializedVersion: 11
+  serializedVersion: 12
   m_Type: 1
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
-  m_CookieSize: 10
+  m_CookieSize2D: {x: 10, y: 10}
   m_Shadows:
     m_Type: 2
     m_Resolution: -1
@@ -1199,7 +1249,7 @@ MonoBehaviour:
   m_text: Copy forth the chosen platform, preserving its form.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
-  m_sharedMaterial: {fileID: 1028886662521247919, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
+  m_sharedMaterial: {fileID: -6720005094572700784, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1234,6 +1284,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: -3
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1335,7 +1386,7 @@ MonoBehaviour:
   m_text: Remove the chosen platform from its place with precision.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
-  m_sharedMaterial: {fileID: 1028886662521247919, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
+  m_sharedMaterial: {fileID: -6720005094572700784, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1370,6 +1421,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: -3
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1471,7 +1523,7 @@ MonoBehaviour:
   m_text: Guide
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
-  m_sharedMaterial: {fileID: 1028886662521247919, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
+  m_sharedMaterial: {fileID: -6720005094572700784, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1506,6 +1558,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1710,7 +1763,7 @@ MonoBehaviour:
   m_text: Command thy hero to leap over obstacles and chasms.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
-  m_sharedMaterial: {fileID: 1028886662521247919, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
+  m_sharedMaterial: {fileID: -6720005094572700784, guid: 4472666d2893a6f4f988af5eefc86f27, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1745,6 +1798,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: -3
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1798,6 +1852,7 @@ GameObject:
   - component: {fileID: 2099966027}
   - component: {fileID: 2099966026}
   - component: {fileID: 2099966025}
+  - component: {fileID: 2099966028}
   m_Layer: 5
   m_Name: BackButton
   m_TagString: Untagged
@@ -1907,6 +1962,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2099966023}
   m_CullTransparentMesh: 1
+--- !u!114 &2099966028
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099966023}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ee24404fe528864db8a10015701b2b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonSound
+  sceneType: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1916,3 +1984,4 @@ SceneRoots:
   - {fileID: 1663881004}
   - {fileID: 818406002}
   - {fileID: 643777208}
+  - {fileID: 264977662}

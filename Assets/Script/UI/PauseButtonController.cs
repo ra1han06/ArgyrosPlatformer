@@ -1,22 +1,53 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 /// <summary>
-/// Controller for the pause button in gameplay scene
-/// Opens the Pause menu scene when clicked
+/// Controller untuk tombol pause di game.
+/// Attach script ini ke PauseButton GameObject.
 /// </summary>
+[RequireComponent(typeof(Button))]
 public class PauseButtonController : MonoBehaviour
 {
-    /// <summary>
-    /// Called when the pause button is clicked
-    /// Loads the Pause scene additively and pauses the game
-    /// </summary>
+    private Button button;
+    private PauseManager pauseManager;
+    
+    void Awake()
+    {
+        button = GetComponent<Button>();
+        if (button != null)
+        {
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(OnPauseButtonClicked);
+            Debug.Log("[PauseButtonController] ✅ Pause button listener added");
+        }
+        else
+        {
+            Debug.LogError("[PauseButtonController] ❌ Button component not found!");
+        }
+    }
+    
+    void Start()
+    {
+        // Cari PauseManager di scene
+        pauseManager = FindFirstObjectByType<PauseManager>();
+        
+        if (pauseManager == null)
+        {
+            Debug.LogError("[PauseButtonController] PauseManager not found in scene!");
+        }
+    }
+    
     public void OnPauseButtonClicked()
     {
-        // Pause the game
-        Time.timeScale = 0f;
+        Debug.Log("[PauseButtonController] 🔘 Pause button clicked");
         
-        // Load Pause scene additively
-        SceneManager.LoadScene("Pause", LoadSceneMode.Additive);
+        if (pauseManager != null)
+        {
+            pauseManager.Pause();
+        }
+        else
+        {
+            Debug.LogError("[PauseButtonController] PauseManager is null!");
+        }
     }
 }

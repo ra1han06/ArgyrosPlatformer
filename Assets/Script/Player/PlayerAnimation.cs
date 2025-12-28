@@ -21,15 +21,11 @@ public class PlayerAnimation : MonoBehaviour
     [Tooltip("Layer apa saja yang dianggap tanah")]
     [SerializeField] private LayerMask groundMask;
     
-    // ========== ANIMATION SETTINGS ==========
-    [Header("Animation Thresholds")]
-    [Tooltip("Kecepatan minimum untuk dianggap 'walking' (0.01-0.1)")]
-    [SerializeField] private float walkThreshold = 0.1f;
-    
     // ========== PRIVATE VARIABLES ==========
     private bool isGrounded;      // Apakah player di tanah?
     private float verticalVelocity; // Kecepatan Y (untuk jump/fall detection)
     private Vector3 lastPosition;   // Posisi frame sebelumnya (untuk hitung velocity)
+    private bool isWinning = false; // Flag untuk disable update saat winning
 
     // ========== INITIALIZATION ==========
     void Start()
@@ -57,6 +53,9 @@ public class PlayerAnimation : MonoBehaviour
     {
         // Jika ada komponen yang hilang, stop
         if (animator == null || characterController == null) return;
+        
+        // PENTING: Skip update jika sedang winning (animasi kemenangan sedang play)
+        if (isWinning) return;
         
         // 1. CEK APAKAH DI TANAH (Ground Check)
         CheckGrounded();
@@ -147,6 +146,30 @@ public class PlayerAnimation : MonoBehaviour
         
         // Note: Nilai 90/-90 mungkin perlu disesuaikan tergantung orientasi model Anda
         // Coba nilai: 0/180, 90/-90, atau 90/270 sampai menghadap dengan benar
+    }
+
+    // ========== PLAY WINNING ANIMATION ==========
+    /// <summary>
+    /// Memutar animasi kemenangan (victory/celebration).
+    /// Dipanggil dari WinningTrigger saat player menyentuh platform star.
+    /// </summary>
+    public void PlayWinAnimation()
+    {
+        // Cek apakah animator tersedia
+        if (animator == null)
+        {
+            Debug.LogWarning("[PlayerAnimation] Animator tidak tersedia, tidak bisa play win animation!");
+            return;
+        }
+
+        // Set flag winning = true agar Update() berhenti override animator
+        isWinning = true;
+
+        // Trigger animasi kemenangan
+        // Note: Parameter "Win" harus sudah dibuat di Animator Controller sebagai Trigger
+        animator.SetTrigger("Win");
+        
+        Debug.Log("[PlayerAnimation] Playing win animation! (Update loop disabled)");
     }
 
     // ========== VISUALISASI GROUND CHECK (EDITOR ONLY) ==========

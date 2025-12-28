@@ -82,7 +82,7 @@ public class EnemyShooter : MonoBehaviour
 
         float dist = Vector3.Distance(transform.position, target.position);
         
-        Debug.Log($"Enemy: Distance to player = {dist:F1}, Detection Range = {detectionRange}");
+        // Debug.Log($"Enemy: Distance to player = {dist:F1}, Detection Range = {detectionRange}");
         
         if (dist <= detectionRange && Time.time >= nextShootTime)
         {

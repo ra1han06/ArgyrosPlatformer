@@ -4,6 +4,10 @@ public class PlayerPlatformInteractor : MonoBehaviour
 {
     [Header("Raycast Settings")]
     [SerializeField] private float raycastDistance = 2f;
+    [SerializeField] private Transform raycastPoint = null; // Optional: Drag transform untuk raycast origin (biarkan null untuk pakai offset)
+    [SerializeField] private Vector3 raycastOffset = new Vector3(0, 1.2f, 0); // Offset dari player center (dipakai kalau raycastPoint null)
+    [Tooltip("Lebar dan tinggi area raycast (X=lebar, Y=tinggi dari kaki-kepala, Z=depth)")]
+    [SerializeField] private Vector3 boxCastSize = new Vector3(0.5f, 2f, 0.3f); // Lebar x Tinggi x Depth
     [SerializeField] private LayerMask platformLayer;
 
     [Header("Paste Settings")]
@@ -93,17 +97,24 @@ public class PlayerPlatformInteractor : MonoBehaviour
         }
 
         GameObject platform = RaycastPlatform();
-        if (platform && platform.GetComponent<CutablePlatform>())
+        if (platform)
         {
-            clipboard = new ClipboardData
+            if (platform.GetComponent<CutablePlatform>())
             {
-                platformPrefab = platform,
-                scale = platform.transform.localScale,
-                isCut = true
-            };
-            platform.SetActive(false); // Hide instead of destroy immediately
-            currentCutCount++;
-            Debug.Log($"Cut platform: {platform.name} | Cuts used: {currentCutCount}/{maxCutCount}");
+                clipboard = new ClipboardData
+                {
+                    platformPrefab = platform,
+                    scale = platform.transform.localScale,
+                    isCut = true
+                };
+                platform.SetActive(false); // Hide instead of destroy immediately
+                currentCutCount++;
+                Debug.Log($"✂️ Cut platform: {platform.name} | Cuts used: {currentCutCount}/{maxCutCount}");
+            }
+            else
+            {
+                Debug.LogWarning($"❌ Platform '{platform.name}' tidak bisa di-cut! Platform ini tidak memiliki komponen CutablePlatform.");
+            }
         }
     }
 
@@ -153,28 +164,89 @@ public class PlayerPlatformInteractor : MonoBehaviour
     {
         Vector3 direction = isFacingRight ? Vector3.right : Vector3.left;
         
-        Debug.DrawRay(transform.position, direction * raycastDistance, Color.yellow, 0.5f);
-        Debug.Log($"Raycasting from {transform.position} in direction {direction} for distance {raycastDistance}");
+        // Gunakan raycastPoint kalau ada, kalau tidak pakai offset
+        Vector3 rayOrigin = raycastPoint != null ? raycastPoint.position : transform.position + raycastOffset;
+        
+        // BoxCast untuk detect area, bukan hanya satu titik
+        Vector3 halfExtents = boxCastSize * 0.5f;
+        
+        Debug.DrawRay(rayOrigin, direction * raycastDistance, Color.yellow, 0.5f);
+        Debug.Log($"BoxCast from {rayOrigin} | Size: {boxCastSize} | Direction: {direction} | Distance: {raycastDistance}");
 
-        if (Physics.Raycast(transform.position, direction, out RaycastHit hit, raycastDistance, platformLayer))
+        if (Physics.BoxCast(rayOrigin, halfExtents, direction, out RaycastHit hit, Quaternion.identity, raycastDistance, platformLayer, QueryTriggerInteraction.Collide))
         {
-            Debug.Log($"Raycast HIT: {hit.collider.gameObject.name} at distance {hit.distance}");
+            Debug.Log($"BoxCast HIT: {hit.collider.gameObject.name} at distance {hit.distance}");
             return hit.collider.gameObject;
         }
 
-        Debug.Log("Raycast MISS: No platform found");
+        Debug.Log("BoxCast MISS: No platform found");
         return null;
     }
 
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.yellow;
+        DrawBoxCastGizmo();
+    }
+
+    private void OnDrawGizmos()
+    {
+        // Selalu tampilkan gizmo (tidak perlu select GameObject)
+        DrawBoxCastGizmo();
+    }
+
+    private void DrawBoxCastGizmo()
+    {
+        // Tentukan raycast origin - INI YANG BERUBAH SAAT OFFSET DIUBAH!
+        Vector3 rayOrigin = raycastPoint != null ? raycastPoint.position : transform.position + raycastOffset;
         Vector3 direction = isFacingRight ? Vector3.right : Vector3.left;
-        Gizmos.DrawRay(transform.position, direction * raycastDistance);
         
-        // Draw a sphere to show raycast origin
+        // 1. Player center (hijau kecil)
         Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, 0.1f);
+        Gizmos.DrawWireSphere(transform.position, 0.08f);
+        
+        // 2. Box area di raycast origin (MERAH TRANSPARAN) - INI YANG GERAK!
+        Gizmos.color = new Color(1f, 0f, 0f, 0.3f);
+        Gizmos.DrawCube(rayOrigin, boxCastSize);
+        
+        // 3. Box outline (MERAH SOLID) - INI YANG GERAK!
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(rayOrigin, boxCastSize);
+        
+        // 4. Garis dari player ke raycast origin (cyan) - MENUNJUKKAN OFFSET!
+        if (raycastPoint == null)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawLine(transform.position, rayOrigin);
+        }
+        
+        // 5. Box area di endpoint (KUNING TRANSPARAN)
+        Vector3 endPosition = rayOrigin + direction * raycastDistance;
+        Gizmos.color = new Color(1f, 1f, 0f, 0.2f);
+        Gizmos.DrawCube(endPosition, boxCastSize);
+        
+        // 6. Box outline di endpoint (KUNING SOLID)
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(endPosition, boxCastSize);
+        
+        // 7. Garis penghubung (dari center box ke center box)
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(rayOrigin, endPosition);
+        
+        // 8. Gambar 4 garis pinggir box untuk visualisasi sweep
+        Vector3 halfSize = boxCastSize * 0.5f;
+        Gizmos.color = new Color(1f, 1f, 0f, 0.5f);
+        // Top-front edge
+        Gizmos.DrawLine(rayOrigin + new Vector3(0, halfSize.y, halfSize.z), 
+                       endPosition + new Vector3(0, halfSize.y, halfSize.z));
+        // Top-back edge
+        Gizmos.DrawLine(rayOrigin + new Vector3(0, halfSize.y, -halfSize.z), 
+                       endPosition + new Vector3(0, halfSize.y, -halfSize.z));
+        // Bottom-front edge
+        Gizmos.DrawLine(rayOrigin + new Vector3(0, -halfSize.y, halfSize.z), 
+                       endPosition + new Vector3(0, -halfSize.y, halfSize.z));
+        // Bottom-back edge
+        Gizmos.DrawLine(rayOrigin + new Vector3(0, -halfSize.y, -halfSize.z), 
+                       endPosition + new Vector3(0, -halfSize.y, -halfSize.z));
     }
 
     /// <summary>

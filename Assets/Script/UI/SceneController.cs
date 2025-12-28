@@ -30,11 +30,8 @@ public class SceneController : MonoBehaviour
     [Header("Audio Settings")]
     [Tooltip("Assign the button click sound here")]
     public AudioClip buttonClickSound;
-    [Tooltip("Assign the background music here (Greek Music)")]
-    public AudioClip backgroundMusic;
 
     private AudioSource audioSource;
-    private static GameObject musicObject; // Static reference to keep track of music across scenes
 
     private void Awake()
     {
@@ -51,26 +48,6 @@ public class SceneController : MonoBehaviour
     {
         // Auto-setup ALL buttons in this scene
         SetupButtonListeners();
-        // Setup Background Music
-        SetupBackgroundMusic();
-    }
-
-    private void SetupBackgroundMusic()
-    {
-        // If music is already playing, don't restart it
-        if (musicObject != null) return;
-
-        if (backgroundMusic != null)
-        {
-            musicObject = new GameObject("UI_BackgroundMusic");
-            AudioSource musicSource = musicObject.AddComponent<AudioSource>();
-            musicSource.clip = backgroundMusic;
-            musicSource.loop = true;
-            musicSource.volume = 0.5f; // Adjust volume as needed
-            musicSource.Play();
-            DontDestroyOnLoad(musicObject);
-            Debug.Log("[SceneController] Background Music Started");
-        }
     }
 
     /// <summary>
@@ -103,7 +80,8 @@ public class SceneController : MonoBehaviour
         ConnectButton("NextlevelButton", OnNextLevelButtonClicked);
 
         // ===== SETTINGS BUTTONS =====
-        ConnectButton("MusicButton", OnMusicButtonClicked);
+        // MusicButton sekarang dihandle oleh MusicToggleButton component, bukan SceneController
+        // ConnectButton("MusicButton", OnMusicButtonClicked); - DISABLED
         ConnectButton("GuideButton", OnGuideButtonClicked);
 
         // ===== ACHIEVEMENT NAVIGATION BUTTONS =====
@@ -344,12 +322,6 @@ public class SceneController : MonoBehaviour
     }
 
     // ----- SETTINGS BUTTONS -----
-    public void OnMusicButtonClicked()
-    {
-        Debug.Log("[SceneController] Music Toggle");
-        // TODO: Toggle music via AudioManager
-    }
-
     public void OnGuideButtonClicked()
     {
         Debug.Log("[SceneController] Guide");
