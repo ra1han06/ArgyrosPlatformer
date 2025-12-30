@@ -10,6 +10,10 @@ public class PauseManager : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private GameObject pauseMenuPanel;
     
+    [Header("UI to Hide on Pause")]
+    [Tooltip("UI yang akan disembunyikan saat pause (Guide button, Music button, DeathTimerUI, dll)")]
+    [SerializeField] private GameObject[] uiElementsToHide;
+    
     [Header("Player Reference")]
     [SerializeField] private Transform player;
     
@@ -26,6 +30,12 @@ public class PauseManager : MonoBehaviour
         if (pauseMenuPanel != null)
         {
             pauseMenuPanel.SetActive(false);
+        }
+        
+        // Auto-find UI elements yang perlu disembunyikan jika belum di-assign
+        if (uiElementsToHide == null || uiElementsToHide.Length == 0)
+        {
+            AutoFindUIElements();
         }
         
         // Auto-find player jika belum di-assign
@@ -56,6 +66,50 @@ public class PauseManager : MonoBehaviour
             {
                 Debug.LogError("[PauseManager] PauseMenuPanel not found!");
             }
+        }
+    }
+    
+    /// <summary>
+    /// Auto-find UI elements yang perlu disembunyikan saat pause
+    /// </summary>
+    private void AutoFindUIElements()
+    {
+        var foundElements = new System.Collections.Generic.List<GameObject>();
+        
+        // Cari Guide button
+        GameObject guideButton = GameObject.Find("GuideButton");
+        if (guideButton != null)
+        {
+            foundElements.Add(guideButton);
+            Debug.Log("[PauseManager] GuideButton found automatically");
+        }
+        
+        // Cari Music button
+        GameObject musicButton = GameObject.Find("MusicButton");
+        if (musicButton != null)
+        {
+            foundElements.Add(musicButton);
+            Debug.Log("[PauseManager] MusicButton found automatically");
+        }
+        
+        // Cari DeathTimerUI (bisa berupa GameObject atau Canvas child)
+        GameObject deathTimerUI = GameObject.Find("DeathTimerUI");
+        if (deathTimerUI != null)
+        {
+            foundElements.Add(deathTimerUI);
+            Debug.Log("[PauseManager] DeathTimerUI found automatically");
+        }
+        
+        // Convert list to array
+        uiElementsToHide = foundElements.ToArray();
+        
+        if (uiElementsToHide.Length > 0)
+        {
+            Debug.Log($"[PauseManager] Auto-found {uiElementsToHide.Length} UI elements to hide on pause");
+        }
+        else
+        {
+            Debug.LogWarning("[PauseManager] No UI elements found to hide! Check GameObject names.");
         }
     }
     
@@ -99,6 +153,9 @@ public class PauseManager : MonoBehaviour
             AudioManager.Instance.PauseBGM();
         }
         
+        // HIDE UI elements yang tidak diperlukan saat pause
+        HideUIElements();
+        
         // Tampilkan panel
         if (pauseMenuPanel != null)
         {
@@ -133,6 +190,9 @@ public class PauseManager : MonoBehaviour
         {
             AudioManager.Instance.ResumeBGM();
         }
+        
+        // SHOW kembali UI elements yang disembunyikan
+        ShowUIElements();
         
         // Sembunyikan panel
         if (pauseMenuPanel != null)
@@ -173,5 +233,49 @@ public class PauseManager : MonoBehaviour
         
         // Load main menu scene
         SceneManager.LoadScene("MainMenu");
+    }
+    
+    // =====================================================
+    // HELPER METHODS: HIDE/SHOW UI ELEMENTS
+    // =====================================================
+    
+    /// <summary>
+    /// Sembunyikan UI elements saat pause
+    /// </summary>
+    private void HideUIElements()
+    {
+        if (uiElementsToHide == null || uiElementsToHide.Length == 0)
+        {
+            return;
+        }
+        
+        foreach (var uiElement in uiElementsToHide)
+        {
+            if (uiElement != null && uiElement.activeSelf)
+            {
+                uiElement.SetActive(false);
+                Debug.Log($"[PauseManager] 👁️‍🗨️ Hiding {uiElement.name}");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Tampilkan kembali UI elements saat resume
+    /// </summary>
+    private void ShowUIElements()
+    {
+        if (uiElementsToHide == null || uiElementsToHide.Length == 0)
+        {
+            return;
+        }
+        
+        foreach (var uiElement in uiElementsToHide)
+        {
+            if (uiElement != null && !uiElement.activeSelf)
+            {
+                uiElement.SetActive(true);
+                Debug.Log($"[PauseManager] 👁️ Showing {uiElement.name}");
+            }
+        }
     }
 }

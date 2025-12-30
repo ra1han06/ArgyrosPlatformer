@@ -22,6 +22,8 @@ public class SceneController : MonoBehaviour
     public static readonly string COMPLETE = "Complete";
     public static readonly string RESTART = "Restart";
     public static readonly string EXIT = "Exit";
+    public static readonly string TUTORIAL = "tutorial";
+    public static readonly string TUTORIAL_COMPLETED = "TutorialCompleted";
 
     [Header("Optional: Custom Return Scene")]
     [Tooltip("Leave empty to use MainMenu as default return scene")]
@@ -60,6 +62,7 @@ public class SceneController : MonoBehaviour
         // ===== MAIN MENU BUTTONS =====
         ConnectButton("ContinueButton", OnContinueButtonClicked);
         ConnectButton("NewgameButton", OnNewGameButtonClicked);
+        ConnectButton("TutorialButton", OnTutorialButtonClicked);
         ConnectButton("AchievementButton", OnAchievementButtonClicked);
         ConnectButton("SettingsButton", OnSettingsButtonClicked);
         ConnectButton("ExitgameButton", OnExitGameButtonClicked);
@@ -198,6 +201,12 @@ public class SceneController : MonoBehaviour
         
         // Pergi ke SelectLevel
         LoadScene(SELECT_LEVEL);
+    }
+
+    public void OnTutorialButtonClicked()
+    {
+        Debug.Log("[SceneController] Tutorial → Load Tutorial Scene");
+        LoadScene(TUTORIAL);
     }
 
     public void OnAchievementButtonClicked()
@@ -435,7 +444,11 @@ public class SceneController : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[SceneController] Loading scene: {sceneName}");
+        // CRITICAL FIX: Reset Time.timeScale ke 1f SEBELUM load scene apapun
+        // Ini adalah SAFETY NET untuk mencegah bug stuck time dari cutscene/pause/complete
+        Time.timeScale = 1f;
+
+        Debug.Log($"[SceneController] Loading scene: {sceneName} (Time.timeScale reset to 1f)");
         SceneManager.LoadScene(sceneName);
     }
 }

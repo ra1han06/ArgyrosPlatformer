@@ -68,6 +68,9 @@ public class GameManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        // Subscribe to scene load events
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+
         // Load save data
         LoadProgress();
 
@@ -76,12 +79,71 @@ public class GameManager : MonoBehaviour
     }
 
     // =====================================================
+    // EVENT: SCENE LOADED
+    // =====================================================
+    /// <summary>
+    /// Dipanggil setiap kali scene baru di-load
+    /// Reset hasInitialized flag untuk level baru
+    /// </summary>
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        // Reset initialization flag untuk level baru
+        hasInitialized = false;
+
+        if (showDebugLog)
+            Debug.Log($"[GameManager] Scene loaded: {scene.name} - hasInitialized reset to false");
+
+        // Re-run Start() logic untuk scene baru
+        string sceneName = scene.name;
+        bool isLevelScene = sceneName.StartsWith("level") || sceneName == "tutorial";
+        
+        // CRITICAL FIX: Auto-detect currentLevelIndex dari scene name
+        if (sceneName.StartsWith("level"))
+        {
+            // Extract level number dari "level1", "level2", etc
+            string levelNumberStr = sceneName.Substring(5); // Remove "level" prefix
+            if (int.TryParse(levelNumberStr, out int levelNumber))
+            {
+                currentLevelIndex = levelNumber;
+                
+                if (showDebugLog)
+                    Debug.Log($"[GameManager] ✅ Auto-detected currentLevelIndex = {currentLevelIndex} from scene name '{sceneName}'");
+            }
+        }
+        else if (sceneName == "tutorial")
+        {
+            currentLevelIndex = 0; // Tutorial is level 0
+            
+            if (showDebugLog)
+                Debug.Log($"[GameManager] ✅ Tutorial scene detected - currentLevelIndex = 0");
+        }
+        
+        if (isLevelScene)
+        {
+            // Initialize timer detection untuk level scene
+            StartCoroutine(InitializeTimer());
+            
+            if (showDebugLog)
+                Debug.Log($"[GameManager] Level scene detected: {sceneName} - Timer will auto-start");
+        }
+        else
+        {
+            if (showDebugLog)
+                Debug.Log($"[GameManager] UI scene detected: {sceneName} - Timer will NOT auto-start");
+        }
+    }
+
+    // =====================================================
     // UNITY LIFECYCLE: START
     // =====================================================
     void Start()
     {
-        // Initialize timer detection
-        StartCoroutine(InitializeTimer());
+        // Start() dipanggil hanya PERTAMA KALI GameManager dibuat (di MainMenu scene)
+        // Untuk scene berikutnya, logic ada di OnSceneLoaded()
+        // Kita skip auto-start di sini karena sudah di-handle di OnSceneLoaded
+        
+        if (showDebugLog)
+            Debug.Log("[GameManager] Start() called - scene logic handled by OnSceneLoaded");
     }
 
     // =====================================================
@@ -259,6 +321,10 @@ public class GameManager : MonoBehaviour
         string timeKey = $"BestTime_Level{currentLevelIndex}";
         string deathsKey = $"BestDeaths_Level{currentLevelIndex}";
 
+        // ALWAYS log this untuk debugging (tidak pakai if showDebugLog)
+        Debug.Log($"[GameManager] 💾 Saving best record for Level {currentLevelIndex}...");
+        Debug.Log($"[GameManager] 📊 Current Stats - Time: {levelTimer:F2}s ({FormatTime(levelTimer)}) | Deaths: {deathCount}");
+
         // Cek apakah ada record sebelumnya
         bool hasRecord = PlayerPrefs.HasKey(timeKey);
 
@@ -267,12 +333,20 @@ public class GameManager : MonoBehaviour
             float previousBestTime = PlayerPrefs.GetFloat(timeKey, float.MaxValue);
             int previousBestDeaths = PlayerPrefs.GetInt(deathsKey, int.MaxValue);
 
+            if (showDebugLog)
+                Debug.Log($"[GameManager] 📋 Previous Best - Time: {previousBestTime:F2}s | Deaths: {previousBestDeaths}");
+
             // Update best time jika lebih cepat
             if (levelTimer < previousBestTime)
             {
                 PlayerPrefs.SetFloat(timeKey, levelTimer);
                 if (showDebugLog)
                     Debug.Log($"[GameManager] 🏆 NEW BEST TIME! {FormatTime(levelTimer)} (previous: {FormatTime(previousBestTime)})");
+            }
+            else
+            {
+                if (showDebugLog)
+                    Debug.Log($"[GameManager] ⏱️ Time not improved (current: {levelTimer:F2}s >= best: {previousBestTime:F2}s)");
             }
 
             // Update best deaths jika lebih sedikit
@@ -282,6 +356,11 @@ public class GameManager : MonoBehaviour
                 if (showDebugLog)
                     Debug.Log($"[GameManager] 🏆 NEW BEST DEATHS! {deathCount} (previous: {previousBestDeaths})");
             }
+            else
+            {
+                if (showDebugLog)
+                    Debug.Log($"[GameManager] 💀 Deaths not improved (current: {deathCount} >= best: {previousBestDeaths})");
+            }
         }
         else
         {
@@ -289,11 +368,22 @@ public class GameManager : MonoBehaviour
             PlayerPrefs.SetFloat(timeKey, levelTimer);
             PlayerPrefs.SetInt(deathsKey, deathCount);
 
-            if (showDebugLog)
-                Debug.Log($"[GameManager] 🎉 FIRST COMPLETION! Time: {FormatTime(levelTimer)} | Deaths: {deathCount}");
+            // ALWAYS log untuk debugging
+            Debug.Log($"[GameManager] 🎉 FIRST COMPLETION! Time: {FormatTime(levelTimer)} ({levelTimer:F2}s) | Deaths: {deathCount}");
+            Debug.Log($"[GameManager] 📝 Saved to PlayerPrefs - Keys: '{timeKey}' = {levelTimer:F2}, '{deathsKey}' = {deathCount}");
         }
 
         PlayerPrefs.Save();
+        
+        // ALWAYS log untuk debugging
+        Debug.Log($"[GameManager] ✅ PlayerPrefs.Save() called - Data committed to disk");
+        
+        // Verify save
+        float savedTime = PlayerPrefs.GetFloat(timeKey, -1f);
+        int savedDeaths = PlayerPrefs.GetInt(deathsKey, -1);
+        
+        // ALWAYS log untuk debugging
+        Debug.Log($"[GameManager] 🔍 Verification - Saved Time: {savedTime:F2}s | Saved Deaths: {savedDeaths}");
         
         // Save progress to save system
         SaveProgress();
@@ -467,5 +557,17 @@ public class GameManager : MonoBehaviour
             Debug.Log($"[GameManager] Progress saved! Last Level: {currentSave.lastPlayedLevel}");
             Debug.Log($"[GameManager] Total Play Time: {currentSave.totalPlayTime:F1}s");
         }
+    }
+
+    // =====================================================
+    // UNITY LIFECYCLE: ON DESTROY
+    // =====================================================
+    void OnDestroy()
+    {
+        // Unsubscribe dari scene load events untuk prevent memory leaks
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+
+        if (showDebugLog)
+            Debug.Log("[GameManager] Destroyed - event listeners cleaned up");
     }
 }

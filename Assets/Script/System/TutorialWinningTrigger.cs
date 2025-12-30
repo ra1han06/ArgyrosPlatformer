@@ -3,23 +3,24 @@ using UnityEngine.SceneManagement;
 using System.Collections;
 
 /// <summary>
-/// WINNING TRIGGER - Sistem Kemenangan
+/// TUTORIAL WINNING TRIGGER - Sistem Kemenangan untuk Tutorial Scene
 /// 
 /// Fungsi:
+/// - Sama seperti WinningTrigger tapi load scene TutorialCompleted instead of Complete
 /// - Mendeteksi ketika player menginjak platform kemenangan (star)
 /// - Freeze player (tidak bisa bergerak)
 /// - Glow effect pada platform (warna emas)
 /// - Camera zoom in secara smooth
 /// - Play audio kemenangan
-/// - Transisi ke scene Complete setelah 2 detik
+/// - Transisi ke scene TutorialCompleted setelah 2 detik
 /// 
 /// Cara Pakai:
-/// 1. Attach script ini ke GameObject "Winning" (platform star)
+/// 1. Attach script ini ke GameObject "Winning" (platform star) di TUTORIAL SCENE
 /// 2. Tambahkan BoxCollider, set Is Trigger = true
 /// 3. Pastikan player punya tag "Player" dan script PlayerController
 /// 4. Assign AudioClip gameWin di AudioManager Inspector
 /// </summary>
-public class WinningTrigger : MonoBehaviour
+public class TutorialWinningTrigger : MonoBehaviour
 {
     // =====================================================
     // SETTINGS (Bisa diubah di Inspector)
@@ -46,8 +47,8 @@ public class WinningTrigger : MonoBehaviour
     [SerializeField] private float zoomDuration = 1.5f;
 
     [Header("=== SCENE TRANSITION SETTINGS ===")]
-    [Tooltip("Nama scene Complete yang akan di-load")]
-    [SerializeField] private string completeSceneName = "Complete";
+    [Tooltip("Nama scene TutorialCompleted yang akan di-load")]
+    [SerializeField] private string tutorialCompletedSceneName = "TutorialCompleted";
 
     [Tooltip("Total delay sebelum pindah scene (default: 2 detik)")]
     [SerializeField] private float transitionDelay = 2f;
@@ -89,7 +90,7 @@ public class WinningTrigger : MonoBehaviour
             boxCol.isTrigger = true;
             
             if (showDebugLog)
-                Debug.Log("[WinningTrigger] BoxCollider otomatis ditambahkan dan set sebagai trigger");
+                Debug.Log("[TutorialWinningTrigger] BoxCollider otomatis ditambahkan dan set sebagai trigger");
         }
         else
         {
@@ -97,7 +98,7 @@ public class WinningTrigger : MonoBehaviour
             col.isTrigger = true;
             
             if (showDebugLog)
-                Debug.Log("[WinningTrigger] Collider sudah ada dan di-set sebagai trigger");
+                Debug.Log("[TutorialWinningTrigger] Collider sudah ada dan di-set sebagai trigger");
         }
     }
 
@@ -118,7 +119,7 @@ public class WinningTrigger : MonoBehaviour
         if (other.CompareTag(playerTag))
         {
             if (showDebugLog)
-                Debug.Log("[WinningTrigger] Player menyentuh winning platform!");
+                Debug.Log("[TutorialWinningTrigger] Player menyentuh winning platform di Tutorial!");
 
             // Set flag agar tidak trigger lagi
             hasTriggered = true;
@@ -142,7 +143,7 @@ public class WinningTrigger : MonoBehaviour
         if (collision.gameObject.CompareTag(playerTag))
         {
             if (showDebugLog)
-                Debug.Log("[WinningTrigger] Player menyentuh winning platform! (via Collision)");
+                Debug.Log("[TutorialWinningTrigger] Player menyentuh winning platform di Tutorial! (via Collision)");
 
             // Set flag agar tidak trigger lagi
             hasTriggered = true;
@@ -156,22 +157,19 @@ public class WinningTrigger : MonoBehaviour
     // WIN SEQUENCE COROUTINE
     // =====================================================
     /// <summary>
-    /// Sequence kemenangan:
-    /// 1. Complete level (stop timer & save best record)
-    /// 2. Freeze player
-    /// 3. Glow platform
-    /// 4. Zoom camera (Coroutine)
-    /// 5. Play audio
-    /// 6. Delay total 2 detik
-    /// 7. Load scene Complete
+    /// Sequence kemenangan untuk Tutorial:
+    /// 1. Freeze player
+    /// 2. Glow platform
+    /// 3. Zoom camera (Coroutine)
+    /// 4. Play audio
+    /// 5. Delay total 2 detik
+    /// 6. Load scene TutorialCompleted
+    /// 
+    /// NOTE: Tidak memanggil GameManager.CompleteLevel() karena tutorial
+    /// tidak perlu simpan stats/best records
     /// </summary>
     private IEnumerator WinSequence(GameObject player)
     {
-        // =====================================
-        // STEP 0: COMPLETE LEVEL - STOP TIMER & SAVE BEST RECORD
-        // =====================================
-        GameManager.Instance?.CompleteLevel();
-        
         // =====================================
         // STEP 1: FREEZE PLAYER
         // =====================================
@@ -197,14 +195,14 @@ public class WinningTrigger : MonoBehaviour
         // STEP 5: DELAY TOTAL 2 DETIK
         // =====================================
         if (showDebugLog)
-            Debug.Log($"[WinningTrigger] Menunggu {transitionDelay} detik sebelum pindah scene...");
+            Debug.Log($"[TutorialWinningTrigger] Menunggu {transitionDelay} detik sebelum pindah scene...");
 
         yield return new WaitForSeconds(transitionDelay);
 
         // =====================================
-        // STEP 6: LOAD SCENE COMPLETE
+        // STEP 6: LOAD SCENE TUTORIALCOMPLETED
         // =====================================
-        LoadCompleteScene();
+        LoadTutorialCompletedScene();
     }
 
     // =====================================================
@@ -226,11 +224,11 @@ public class WinningTrigger : MonoBehaviour
             playerController.canMove = false;
 
             if (showDebugLog)
-                Debug.Log("[WinningTrigger] Player di-freeze (canMove = false)");
+                Debug.Log("[TutorialWinningTrigger] Player di-freeze (canMove = false)");
         }
         else
         {
-            Debug.LogWarning("[WinningTrigger] PlayerController tidak ditemukan di Player GameObject!");
+            Debug.LogWarning("[TutorialWinningTrigger] PlayerController tidak ditemukan di Player GameObject!");
         }
 
         // Trigger animasi kemenangan
@@ -241,11 +239,11 @@ public class WinningTrigger : MonoBehaviour
             playerAnimation.PlayWinAnimation();
 
             if (showDebugLog)
-                Debug.Log("[WinningTrigger] Animasi kemenangan di-trigger!");
+                Debug.Log("[TutorialWinningTrigger] Animasi kemenangan di-trigger!");
         }
         else
         {
-            Debug.LogWarning("[WinningTrigger] PlayerAnimation tidak ditemukan di Player GameObject!");
+            Debug.LogWarning("[TutorialWinningTrigger] PlayerAnimation tidak ditemukan di Player GameObject!");
         }
     }
 
@@ -265,7 +263,7 @@ public class WinningTrigger : MonoBehaviour
 
         if (renderers.Length == 0)
         {
-            Debug.LogWarning("[WinningTrigger] Tidak ada Renderer ditemukan untuk glow effect!");
+            Debug.LogWarning("[TutorialWinningTrigger] Tidak ada Renderer ditemukan untuk glow effect!");
             return;
         }
 
@@ -299,7 +297,7 @@ public class WinningTrigger : MonoBehaviour
             }
 
             if (showDebugLog)
-                Debug.Log($"[WinningTrigger] Glow effect aktif di {rend.gameObject.name}");
+                Debug.Log($"[TutorialWinningTrigger] Glow effect aktif di {rend.gameObject.name}");
         }
     }
 
@@ -317,7 +315,7 @@ public class WinningTrigger : MonoBehaviour
 
         if (mainCamera == null)
         {
-            Debug.LogWarning("[WinningTrigger] Main Camera tidak ditemukan!");
+            Debug.LogWarning("[TutorialWinningTrigger] Main Camera tidak ditemukan!");
             yield break;
         }
 
@@ -326,7 +324,7 @@ public class WinningTrigger : MonoBehaviour
         float elapsed = 0f;
 
         if (showDebugLog)
-            Debug.Log($"[WinningTrigger] Memulai zoom camera: {startFOV} → {targetFOV}");
+            Debug.Log($"[TutorialWinningTrigger] Memulai zoom camera: {startFOV} → {targetFOV}");
 
         while (elapsed < zoomDuration)
         {
@@ -349,7 +347,7 @@ public class WinningTrigger : MonoBehaviour
         mainCamera.fieldOfView = targetFOV;
 
         if (showDebugLog)
-            Debug.Log("[WinningTrigger] Zoom camera selesai!");
+            Debug.Log("[TutorialWinningTrigger] Zoom camera selesai!");
     }
 
     // =====================================================
@@ -363,14 +361,14 @@ public class WinningTrigger : MonoBehaviour
         // Cek apakah AudioManager tersedia
         if (AudioManager.Instance == null)
         {
-            Debug.LogWarning("[WinningTrigger] AudioManager.Instance tidak ditemukan!");
+            Debug.LogWarning("[TutorialWinningTrigger] AudioManager.Instance tidak ditemukan!");
             return;
         }
 
         // Cek apakah AudioClip gameWin sudah di-assign di AudioManager
         if (AudioManager.Instance.gameWin == null)
         {
-            Debug.LogWarning("[WinningTrigger] AudioClip gameWin belum di-assign di AudioManager Inspector!");
+            Debug.LogWarning("[TutorialWinningTrigger] AudioClip gameWin belum di-assign di AudioManager Inspector!");
             return;
         }
 
@@ -378,53 +376,24 @@ public class WinningTrigger : MonoBehaviour
         AudioManager.Instance.PlaySFX(AudioManager.Instance.gameWin);
 
         if (showDebugLog)
-            Debug.Log("[WinningTrigger] Audio kemenangan diputar!");
+            Debug.Log("[TutorialWinningTrigger] Audio kemenangan diputar!");
     }
 
     // =====================================================
     // STEP 6: LOAD SCENE
     // =====================================================
     /// <summary>
-    /// Load scene Complete.
+    /// Load scene TutorialCompleted.
     /// </summary>
-    private void LoadCompleteScene()
+    private void LoadTutorialCompletedScene()
     {
         if (showDebugLog)
-            Debug.Log($"[WinningTrigger] Loading scene: {completeSceneName}");
+            Debug.Log($"[TutorialWinningTrigger] Loading scene: {tutorialCompletedSceneName}");
 
-        // CRITICAL: Reset Time.timeScale sebelum load Complete scene
+        // CRITICAL: Reset Time.timeScale sebelum load TutorialCompleted scene
         // Ini mencegah bug stuck time dari cutscene/pause
         Time.timeScale = 1f;
 
-        SceneManager.LoadScene(completeSceneName);
-    }
-
-    // =====================================================
-    // GIZMOS (VISUAL DI SCENE VIEW)
-    // =====================================================
-    /// <summary>
-    /// Tampilkan visual gizmo di Scene View untuk mudah debug.
-    /// </summary>
-    private void OnDrawGizmos()
-    {
-        Collider col = GetComponent<Collider>();
-        
-        if (col != null)
-        {
-            // Warna kuning transparan
-            Gizmos.color = new Color(1f, 1f, 0f, 0.3f);
-
-            // Jika BoxCollider, gambar box
-            if (col is BoxCollider boxCol)
-            {
-                Gizmos.matrix = transform.localToWorldMatrix;
-                Gizmos.DrawCube(boxCol.center, boxCol.size);
-            }
-            // Jika SphereCollider, gambar sphere
-            else if (col is SphereCollider sphereCol)
-            {
-                Gizmos.DrawSphere(transform.position + sphereCol.center, sphereCol.radius);
-            }
-        }
+        SceneManager.LoadScene(tutorialCompletedSceneName);
     }
 }

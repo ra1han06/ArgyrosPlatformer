@@ -39,21 +39,21 @@ public class OperationLimitUI : MonoBehaviour
         var remaining = playerInteractor.GetRemainingOperations();
 
         // Update Copy
-        UpdateTextElement(copyText, "Copy", remaining.copy, usage.copy, limits.copy);
+        UpdateTextElement(copyText, remaining.copy, usage.copy, limits.copy);
 
         // Update Cut
-        UpdateTextElement(cutText, "Cut", remaining.cut, usage.cut, limits.cut);
+        UpdateTextElement(cutText, remaining.cut, usage.cut, limits.cut);
 
         // Update Paste
-        UpdateTextElement(pasteText, "Paste", remaining.paste, usage.paste, limits.paste);
+        UpdateTextElement(pasteText, remaining.paste, usage.paste, limits.paste);
     }
 
-    private void UpdateTextElement(TextMeshProUGUI textElement, string operationName, int remaining, int used, int max)
+    private void UpdateTextElement(TextMeshProUGUI textElement, int remaining, int used, int max)
     {
         if (textElement == null) return;
 
         // Set text without icon
-        textElement.text = $"{operationName}: {used}/{max}";
+        textElement.text = $"{used}/{max}";
 
         // Set color based on remaining operations
         if (remaining == 0)

@@ -65,6 +65,9 @@ public class CompleteMenuController : MonoBehaviour
     {
         LogDebug("Main Menu button clicked");
 
+        // CRITICAL: Reset Time.timeScale sebelum load scene
+        Time.timeScale = 1f;
+
         // Load Main Menu scene
         SceneManager.LoadScene("MainMenu");
     }
@@ -85,6 +88,9 @@ public class CompleteMenuController : MonoBehaviour
 
         // Reset timer dan death count untuk sesi baru
         GameManager.Instance.ResetLevel();
+
+        // CRITICAL: Reset Time.timeScale sebelum load scene
+        Time.timeScale = 1f;
 
         // Load ulang level yang sama
         string levelSceneName = $"level{currentLevel}";
@@ -120,6 +126,9 @@ public class CompleteMenuController : MonoBehaviour
 
         // Reset timer dan death count untuk level baru
         GameManager.Instance.ResetLevel();
+
+        // CRITICAL: Reset Time.timeScale sebelum load scene
+        Time.timeScale = 1f;
 
         // Load level berikutnya
         string nextLevelSceneName = $"level{nextLevel}";
