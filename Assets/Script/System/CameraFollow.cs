@@ -12,6 +12,8 @@ public class CameraFollow : MonoBehaviour
     
     [Tooltip("Offset posisi camera dari target")]
     [SerializeField] private Vector3 offset = new Vector3(0, 2, -10);
+
+    public Vector3 Offset => offset;
     
     [Tooltip("Kecepatan smoothing (0 = instant, 10 = very smooth)")]
     [SerializeField] private float smoothSpeed = 5f;

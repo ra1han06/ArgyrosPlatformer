@@ -2,6 +2,17 @@ using UnityEngine;
 
 public class PlayerPlatformInteractor : MonoBehaviour
 {
+    [Header("Cheat / Testing")]
+    [Tooltip("Type this sequence on the keyboard to toggle Infinite Paste mode.")]
+    [SerializeField] private string infinitePasteCheatCode = "iwantinvinitepaste";
+    [Tooltip("Type this sequence on the keyboard to toggle Godmode (infinite copy/cut/paste limits).")]
+    [SerializeField] private string godmodeCheatCode = "godmodeops";
+    [Tooltip("How many recent characters to keep buffered for cheat detection.")]
+    [SerializeField] private int cheatBufferSize = 32;
+    [SerializeField] private bool infinitePasteEnabled = false;
+    [SerializeField] private bool godmodeEnabled = false;
+    private string cheatBuffer = string.Empty;
+
     [Header("Raycast Settings")]
     [SerializeField] private float raycastDistance = 2f;
     [SerializeField] private Transform raycastPoint = null; // Optional: Drag transform untuk raycast origin (biarkan null untuk pakai offset)
@@ -17,6 +28,10 @@ public class PlayerPlatformInteractor : MonoBehaviour
     [SerializeField] private int maxCopyCount = 1;
     [SerializeField] private int maxCutCount = 1;
     [SerializeField] private int maxPasteCount = 3;
+
+    [Header("UI Feedback")]
+    [Tooltip("Optional. If assigned, shows a toast on successful copy/cut/paste.")]
+    [SerializeField] private ToastNotifier toastNotifier;
 
     // Current usage counters
     private int currentCopyCount = 0;
@@ -36,6 +51,7 @@ public class PlayerPlatformInteractor : MonoBehaviour
 
     void Update()
     {
+        HandleCheatCodeInput();
         UpdateFacingDirection();
 
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
@@ -49,6 +65,52 @@ public class PlayerPlatformInteractor : MonoBehaviour
         }
     }
 
+    private void HandleCheatCodeInput()
+    {
+        // Unity gives us the typed characters this frame (respects shift, etc.)
+        string input = Input.inputString;
+        if (string.IsNullOrEmpty(input))
+            return;
+
+        // Filter to letters/numbers only to reduce accidental triggers.
+        for (int i = 0; i < input.Length; i++)
+        {
+            char c = input[i];
+            if (!char.IsLetterOrDigit(c))
+                continue;
+
+            cheatBuffer += char.ToLowerInvariant(c);
+        }
+
+        if (cheatBuffer.Length > cheatBufferSize)
+            cheatBuffer = cheatBuffer.Substring(cheatBuffer.Length - cheatBufferSize);
+
+        if (!string.IsNullOrEmpty(infinitePasteCheatCode)
+            && cheatBuffer.Contains(infinitePasteCheatCode.ToLowerInvariant()))
+        {
+            infinitePasteEnabled = !infinitePasteEnabled;
+            cheatBuffer = string.Empty;
+
+            Debug.Log($"[CHEAT] Infinite Paste: {(infinitePasteEnabled ? "ON" : "OFF")}");
+            toastNotifier?.Show(infinitePasteEnabled ? "Infinite paste: ON" : "Infinite paste: OFF");
+        }
+
+        if (!string.IsNullOrEmpty(godmodeCheatCode)
+            && cheatBuffer.Contains(godmodeCheatCode.ToLowerInvariant()))
+        {
+            godmodeEnabled = !godmodeEnabled;
+
+            // Godmode implies infinite paste as well.
+            if (godmodeEnabled)
+                infinitePasteEnabled = true;
+
+            cheatBuffer = string.Empty;
+
+            Debug.Log($"[CHEAT] Godmode Ops: {(godmodeEnabled ? "ON" : "OFF")}");
+            toastNotifier?.Show(godmodeEnabled ? "Godmode ops: ON" : "Godmode ops: OFF");
+        }
+    }
+
     private void UpdateFacingDirection()
     {
         float horizontal = Input.GetAxisRaw("Horizontal");
@@ -59,7 +121,7 @@ public class PlayerPlatformInteractor : MonoBehaviour
     private void TryCopy()
     {
         // Check copy limit
-        if (currentCopyCount >= maxCopyCount)
+        if (!godmodeEnabled && currentCopyCount >= maxCopyCount)
         {
             Debug.LogWarning($"Copy limit reached! ({currentCopyCount}/{maxCopyCount})");
             return;
@@ -83,45 +145,71 @@ public class PlayerPlatformInteractor : MonoBehaviour
             scale = platform.transform.localScale,
             isCut = false
         };
-        currentCopyCount++;
-        Debug.Log($"✓ Successfully copied platform: {platform.name} | Scale: {platform.transform.localScale} | Copies used: {currentCopyCount}/{maxCopyCount}");
+
+        if (!godmodeEnabled)
+        {
+            currentCopyCount++;
+        }
+
+        Debug.Log(
+            godmodeEnabled
+                ? $"✓ Successfully copied platform: {platform.name} | Scale: {platform.transform.localScale} | Copies used: (GODMODE)"
+                : $"✓ Successfully copied platform: {platform.name} | Scale: {platform.transform.localScale} | Copies used: {currentCopyCount}/{maxCopyCount}"
+        );
+
+        toastNotifier?.Show("Platform successfully copied");
     }
 
     private void TryCut()
     {
         // Check cut limit
-        if (currentCutCount >= maxCutCount)
+        if (!godmodeEnabled && currentCutCount >= maxCutCount)
         {
             Debug.LogWarning($"Cut limit reached! ({currentCutCount}/{maxCutCount})");
             return;
         }
 
         GameObject platform = RaycastPlatform();
-        if (platform)
+        if (platform == null)
         {
-            if (platform.GetComponent<CutablePlatform>())
-            {
-                clipboard = new ClipboardData
-                {
-                    platformPrefab = platform,
-                    scale = platform.transform.localScale,
-                    isCut = true
-                };
-                platform.SetActive(false); // Hide instead of destroy immediately
-                currentCutCount++;
-                Debug.Log($"✂️ Cut platform: {platform.name} | Cuts used: {currentCutCount}/{maxCutCount}");
-            }
-            else
-            {
-                Debug.LogWarning($"❌ Platform '{platform.name}' tidak bisa di-cut! Platform ini tidak memiliki komponen CutablePlatform.");
-            }
+            Debug.LogWarning("No platform detected by raycast for cut!");
+            toastNotifier?.Show("No platform to cut");
+            return;
         }
+
+        if (platform.GetComponent<CutablePlatform>())
+        {
+            clipboard = new ClipboardData
+            {
+                platformPrefab = platform,
+                scale = platform.transform.localScale,
+                isCut = true
+            };
+            platform.SetActive(false); // Hide instead of destroy immediately
+
+            if (!godmodeEnabled)
+            {
+                currentCutCount++;
+            }
+
+            Debug.Log(
+                godmodeEnabled
+                    ? $"✂️ Cut platform: {platform.name} | Cuts used: (GODMODE)"
+                    : $"✂️ Cut platform: {platform.name} | Cuts used: {currentCutCount}/{maxCutCount}"
+            );
+
+            toastNotifier?.Show("Platform successfully cut");
+            return;
+        }
+
+        Debug.LogWarning($"❌ Platform '{platform.name}' tidak bisa di-cut! Platform ini tidak memiliki komponen CutablePlatform.");
+        toastNotifier?.Show("This platform can't be cut");
     }
 
     private void TryPaste()
     {
         // Check paste limit
-        if (currentPasteCount >= maxPasteCount)
+        if (!infinitePasteEnabled && !godmodeEnabled && currentPasteCount >= maxPasteCount)
         {
             Debug.LogWarning($"Paste limit reached! ({currentPasteCount}/{maxPasteCount})");
             return;
@@ -130,6 +218,7 @@ public class PlayerPlatformInteractor : MonoBehaviour
         if (clipboard == null || clipboard.platformPrefab == null) 
         {
             Debug.LogWarning("Clipboard is empty or platform reference is null!");
+            toastNotifier?.Show("Nothing to be pasted");
             return;
         }
 
@@ -144,8 +233,18 @@ public class PlayerPlatformInteractor : MonoBehaviour
         newPlatform.transform.localScale = clipboard.scale;
         newPlatform.SetActive(true);
 
-        currentPasteCount++;
-        Debug.Log($"Pasted platform at position: {pastePosition} | Pastes used: {currentPasteCount}/{maxPasteCount}");
+        if (!infinitePasteEnabled && !godmodeEnabled)
+        {
+            currentPasteCount++;
+        }
+
+        Debug.Log(
+            (infinitePasteEnabled || godmodeEnabled)
+                ? $"Pasted platform at position: {pastePosition} | Pastes used: (INFINITE MODE)"
+                : $"Pasted platform at position: {pastePosition} | Pastes used: {currentPasteCount}/{maxPasteCount}"
+        );
+
+    toastNotifier?.Show("Platform successfully pasted");
 
         // If it was a cut operation, destroy the original
         if (clipboard.isCut && clipboard.platformPrefab != null)
