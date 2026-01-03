@@ -10,6 +10,15 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class IntroCameraSequence : MonoBehaviour
 {
+    // =====================================================
+    // STATIC EVENT - Sequence Complete
+    // =====================================================
+    /// <summary>
+    /// Event dipanggil ketika intro camera sequence selesai.
+    /// GameManager bisa subscribe ke event ini untuk start timer.
+    /// </summary>
+    public static event System.Action OnSequenceComplete;
+
     // NOTE: If you see a compile error mentioning CameraFollow's private offset field here,
     // it is from an older version; this script no longer touches it.
     [Header("References")]
@@ -153,6 +162,8 @@ public class IntroCameraSequence : MonoBehaviour
 
     private void Awake()
     {
+        Debug.Log("[IntroCameraSequence] Awake() called!");
+        
         // Always prefer the Camera on THIS GameObject (Main Camera).
         // This avoids accidentally driving a different camera.
         targetCamera = GetComponent<Camera>();
@@ -185,10 +196,14 @@ public class IntroCameraSequence : MonoBehaviour
             _initialZ = targetCamera.transform.position.z;
             _initialRotation = targetCamera.transform.rotation;
         }
+        
+        Debug.Log($"[IntroCameraSequence] Awake complete. targetCamera={targetCamera?.name}, player={player?.name}, finish={finish?.name}");
     }
 
     private void Start()
     {
+        Debug.Log("[IntroCameraSequence] Start() called. playOnStart = " + playOnStart);
+        
         if (playOnStart)
         {
             TryPlay();
@@ -198,6 +213,8 @@ public class IntroCameraSequence : MonoBehaviour
     public void TryPlay()
     {
         if (_played) return;
+
+        Debug.Log("[IntroCameraSequence] TryPlay() called - starting intro sequence...");
 
         // Last-chance resolve in case objects spawn/enable order is weird.
         if (autoFindPlayer && player == null)
@@ -224,6 +241,7 @@ public class IntroCameraSequence : MonoBehaviour
         }
 
         _played = true;
+        Debug.Log("[IntroCameraSequence] Starting PlayRoutine coroutine...");
         StartCoroutine(PlayRoutine());
     }
 
@@ -288,6 +306,10 @@ public class IntroCameraSequence : MonoBehaviour
     yield return MoveAndFov(camT, playerPos, finalFov, moveToPlayerDuration);
 
         if (cameraFollow != null) cameraFollow.enabled = true;
+
+        // ✅ Intro camera sequence selesai - notify subscribers (GameManager)
+        Debug.Log("[IntroCameraSequence] ✅ Sequence complete! Invoking OnSequenceComplete event...");
+        OnSequenceComplete?.Invoke();
     }
 
     private Vector3 ApplyZLock(Vector3 pos)

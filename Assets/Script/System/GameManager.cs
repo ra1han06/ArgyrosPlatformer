@@ -61,6 +61,8 @@ public class GameManager : MonoBehaviour
         // Singleton pattern implementation
         if (Instance != null && Instance != this)
         {
+            if (showDebugLog)
+                Debug.Log("[GameManager] Duplicate GameManager found - destroying this instance");
             Destroy(gameObject);
             return;
         }
@@ -140,10 +142,40 @@ public class GameManager : MonoBehaviour
     {
         // Start() dipanggil hanya PERTAMA KALI GameManager dibuat (di MainMenu scene)
         // Untuk scene berikutnya, logic ada di OnSceneLoaded()
-        // Kita skip auto-start di sini karena sudah di-handle di OnSceneLoaded
+        // TAPI: jika level dibuka langsung dari editor, OnSceneLoaded tidak dipanggil!
+        // Jadi kita perlu check apakah kita di level scene dan initialize timer
         
         if (showDebugLog)
             Debug.Log("[GameManager] Start() called - scene logic handled by OnSceneLoaded");
+
+        // Check apakah ini level scene (untuk handle direct play dari editor)
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        bool isLevelScene = sceneName.StartsWith("level") || sceneName == "tutorial";
+        
+        if (showDebugLog)
+            Debug.Log($"[GameManager] Current scene: '{sceneName}', isLevelScene: {isLevelScene}, hasInitialized: {hasInitialized}");
+        
+        if (isLevelScene && !hasInitialized)
+        {
+            if (showDebugLog)
+                Debug.Log($"[GameManager] Direct play detected in level scene '{sceneName}' - starting InitializeTimer");
+            
+            // Auto-detect currentLevelIndex dari scene name
+            if (sceneName.StartsWith("level"))
+            {
+                string levelNumberStr = sceneName.Substring(5);
+                if (int.TryParse(levelNumberStr, out int levelNumber))
+                {
+                    currentLevelIndex = levelNumber;
+                }
+            }
+            else if (sceneName == "tutorial")
+            {
+                currentLevelIndex = 0;
+            }
+            
+            StartCoroutine(InitializeTimer());
+        }
     }
 
     // =====================================================
@@ -159,11 +191,14 @@ public class GameManager : MonoBehaviour
     }
 
     // =====================================================
-    // INITIALIZATION - WAIT FOR CUTSCENE END
+    // INITIALIZATION - WAIT FOR CUTSCENE/INTRO CAMERA END
     // =====================================================
     /// <summary>
-    /// Menunggu cutscene selesai, lalu auto-start timer.
-    /// Jika tidak ada cutscene, timer akan start setelah delay 2 detik.
+    /// Menunggu intro camera sequence atau cutscene selesai, lalu auto-start timer.
+    /// Priority:
+    /// 1. IntroCameraSequence (jika ada di scene)
+    /// 2. NovelCutsceneManager (jika ada cutscene)
+    /// 3. Default delay 0.5 detik (jika tidak ada keduanya)
     /// </summary>
     private IEnumerator InitializeTimer()
     {
@@ -174,8 +209,43 @@ public class GameManager : MonoBehaviour
             yield break;
         }
 
+        // Wait 1 frame untuk pastikan semua GameObject sudah ter-instantiate
+        yield return null;
+
+        // =====================================================
+        // PRIORITY 1: Wait for IntroCameraSequence
+        // =====================================================
+        // Check if IntroCameraSequence exists in the scene
+        IntroCameraSequence introCam = Object.FindFirstObjectByType<IntroCameraSequence>();
+        
         if (showDebugLog)
-            Debug.Log("[GameManager] Waiting for cutscene to finish...");
+            Debug.Log($"[GameManager] Looking for IntroCameraSequence... Found: {(introCam != null ? "YES" : "NO")}");
+        
+        if (introCam != null && introCam.enabled)
+        {
+            if (showDebugLog)
+                Debug.Log("[GameManager] IntroCameraSequence found! Waiting ~11 seconds for intro camera sequence to complete...");
+
+            // Wait for intro camera sequence duration
+            // Total duration: focusFinish (1.4) + hold (0.35) + trace waypoints (6 waypoints * 1.0 + 6 * 0.2) + hold (0.35) + moveToPlayer (1.4)
+            // ≈ 1.4 + 0.35 + 6.0 + 1.2 + 0.35 + 1.4 = 10.7 seconds
+            // Add buffer = 11 seconds
+            yield return new WaitForSeconds(11f);
+
+            if (showDebugLog)
+                Debug.Log("[GameManager] ✅ Intro camera sequence finished (based on timer)!");
+
+            // Start timer immediately after intro camera
+            hasInitialized = true;
+            StartTimer();
+            yield break;
+        }
+
+        // =====================================================
+        // PRIORITY 2: Wait for NovelCutsceneManager
+        // =====================================================
+        if (showDebugLog)
+            Debug.Log("[GameManager] No IntroCameraSequence found. Checking for cutscene...");
 
         // Wait untuk NovelCutsceneManager exist (dengan timeout 2 detik)
         float timeout = 2f;
@@ -206,9 +276,12 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            // Tidak ada cutscene manager, tunggu 0.5 detik untuk level setup
+            // =====================================================
+            // PRIORITY 3: Default delay
+            // =====================================================
+            // Tidak ada intro camera atau cutscene manager, tunggu 0.5 detik untuk level setup
             if (showDebugLog)
-                Debug.Log("[GameManager] No cutscene detected, starting timer after short delay...");
+                Debug.Log("[GameManager] No intro camera or cutscene detected, starting timer after short delay...");
 
             yield return new WaitForSeconds(0.5f);
         }

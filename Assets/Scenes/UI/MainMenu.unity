@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 78487286}
   - component: {fileID: 78487285}
   - component: {fileID: 78487284}
+  - component: {fileID: 78487287}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -211,6 +212,66 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &78487287
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 78487283}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20976e1c842734fd28168d2215c9460d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IntroCameraSequence
+  targetCamera: {fileID: 78487285}
+  cameraFollow: {fileID: 0}
+  player: {fileID: 0}
+  finish: {fileID: 0}
+  autoFindPlayer: 1
+  finishObjectName: PlatformStar_001
+  focusFinishDuration: 1.2
+  zoomOutDuration: 1
+  moveToPlayerDuration: 1.2
+  holdOnFinish: 0.2
+  holdOnWide: 0.2
+  enableTracePan: 0
+  traceUseWaypoints: 1
+  traceWaypointNames:
+  - PlatformSmall_004 (11)
+  - PlatformSmall_004 (2)
+  - Hazard_PlatformSmall_002 (3)
+  - RockSmall_003 (5)
+  - PlatformSmall_004 (1)
+  - RockSmall_003 (4)
+  traceWaypointWorldOffset: {x: 0, y: 0, z: 0}
+  traceExtraZoomOutOffset: {x: 0, y: 15, z: 0}
+  traceWaypointFovOverride: 0
+  traceSegmentDuration: 0.5
+  traceHoldBetweenSegments: 0.05
+  traceStepX: 0
+  traceStepY: 0
+  finishFov: 35
+  wideFov: 75
+  gameplayFov: 60
+  gameplayWorldOffset: {x: 0, y: 0, z: 0}
+  gameplayFovOverride: 0
+  finishWorldOffset: {x: 0, y: 6, z: 0}
+  wideWorldOffset: {x: 0, y: 25, z: 0}
+  wideShotFramePlatforms: 1
+  wideLeftAnchorObjectName: Hazard_PlatformSmall_002
+  wideRightAnchorObjectName: PlatformSmall_004
+  useFixedWideShot: 0
+  fixedWideShotPosition: {x: -10.88, y: 74.45, z: -33.06}
+  platformLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  wideBoundsPadding: 1.15
+  wideCenterYBias: 0
+  wideFovClamp: {x: 35, y: 90}
+  minWideDistance: 6
+  lockZToInitial: 1
+  playOnStart: 1
 --- !u!1 &153471436
 GameObject:
   m_ObjectHideFlags: 0
@@ -715,7 +776,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1188,7 +1248,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1512,14 +1571,14 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1151165004}
   m_Enabled: 1
-  serializedVersion: 12
+  serializedVersion: 11
   m_Type: 1
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
-  m_CookieSize2D: {x: 10, y: 10}
+  m_CookieSize: 10
   m_Shadows:
     m_Type: 2
     m_Resolution: -1
@@ -1708,7 +1767,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2088,7 +2146,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2463,7 +2520,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2600,7 +2656,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2739,7 +2794,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
