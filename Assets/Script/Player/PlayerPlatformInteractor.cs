@@ -33,10 +33,18 @@ public class PlayerPlatformInteractor : MonoBehaviour
     [Tooltip("Optional. If assigned, shows a toast on successful copy/cut/paste.")]
     [SerializeField] private ToastNotifier toastNotifier;
 
+    [Header("Platform Targeting")]
+    [Tooltip("Interval waktu untuk raycast detection (detik). Default: 0.1s")]
+    [SerializeField] private float raycastInterval = 0.1f;
+
     // Current usage counters
     private int currentCopyCount = 0;
     private int currentCutCount = 0;
     private int currentPasteCount = 0;
+
+    // Platform targeting variables
+    private float raycastTimer = 0f;
+    private GameObject currentTargetedPlatform = null;
 
     // Clipboard data structure to store platform information
     private class ClipboardData
@@ -53,6 +61,9 @@ public class PlayerPlatformInteractor : MonoBehaviour
     {
         HandleCheatCodeInput();
         UpdateFacingDirection();
+
+        // Timer-based raycast detection untuk platform targeting (every 0.1s)
+        UpdatePlatformTargeting();
 
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
         {
@@ -116,6 +127,83 @@ public class PlayerPlatformInteractor : MonoBehaviour
         float horizontal = Input.GetAxisRaw("Horizontal");
         if (horizontal > 0) isFacingRight = true;
         else if (horizontal < 0) isFacingRight = false;
+    }
+
+    // =====================================================
+    // PLATFORM TARGETING - TIMER-BASED RAYCAST DETECTION
+    // =====================================================
+    /// <summary>
+    /// Update platform targeting setiap 0.1s (raycast timer).
+    /// Deteksi platform yang sedang di-target player.
+    /// Enable/disable glow effect pada platform.
+    /// </summary>
+    private void UpdatePlatformTargeting()
+    {
+        // Update timer
+        raycastTimer += Time.deltaTime;
+
+        // Raycast hanya setiap raycastInterval (0.1s)
+        if (raycastTimer >= raycastInterval)
+        {
+            raycastTimer = 0f; // Reset timer
+
+            // Perform raycast untuk detect platform
+            GameObject detectedPlatform = RaycastPlatformForTargeting();
+
+            // Cek apakah ada perubahan platform yang di-target
+            if (detectedPlatform != currentTargetedPlatform)
+            {
+                // Disable glow pada platform sebelumnya (jika ada)
+                if (currentTargetedPlatform != null)
+                {
+                    PlatformActionIndicator previousIndicator = currentTargetedPlatform.GetComponent<PlatformActionIndicator>();
+                    if (previousIndicator != null)
+                    {
+                        previousIndicator.DisableGlow();
+                    }
+                }
+
+                // Update current targeted platform
+                currentTargetedPlatform = detectedPlatform;
+
+                // Enable glow pada platform baru (jika ada)
+                if (currentTargetedPlatform != null)
+                {
+                    PlatformActionIndicator newIndicator = currentTargetedPlatform.GetComponent<PlatformActionIndicator>();
+                    if (newIndicator != null)
+                    {
+                        newIndicator.EnableGlow();
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Raycast khusus untuk platform targeting (timer-based).
+    /// Deteksi platform dengan CopyablePlatform atau CutablePlatform component.
+    /// Return null jika tidak ada platform yang terdeteksi.
+    /// </summary>
+    private GameObject RaycastPlatformForTargeting()
+    {
+        Vector3 direction = isFacingRight ? Vector3.right : Vector3.left;
+        Vector3 rayOrigin = raycastPoint != null ? raycastPoint.position : transform.position + raycastOffset;
+        Vector3 halfExtents = boxCastSize * 0.5f;
+
+        if (Physics.BoxCast(rayOrigin, halfExtents, direction, out RaycastHit hit, Quaternion.identity, raycastDistance, platformLayer, QueryTriggerInteraction.Collide))
+        {
+            GameObject platform = hit.collider.gameObject;
+
+            // Cek apakah platform punya CopyablePlatform atau CutablePlatform component
+            // (dan juga harus punya PlatformActionIndicator untuk bisa show glow/icon)
+            if ((platform.GetComponent<CopyablePlatform>() != null || platform.GetComponent<CutablePlatform>() != null)
+                && platform.GetComponent<PlatformActionIndicator>() != null)
+            {
+                return platform;
+            }
+        }
+
+        return null;
     }
 
     private void TryCopy()
