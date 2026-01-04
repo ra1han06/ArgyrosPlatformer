@@ -16,10 +16,21 @@ public class EnemyShooter : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool showDebugGizmos = false; // Turn off by default
     
-    private float nextShootTime;
+    private Animator animator;
 
     void Start()
     {
+        // Get Animator component from this GameObject or children (e.g., girl18 model)
+        animator = GetComponentInChildren<Animator>();
+        if (animator == null)
+        {
+            Debug.LogWarning($"Enemy '{gameObject.name}': Animator component not found!");
+        }
+        else
+        {
+            Debug.Log($"Enemy '{gameObject.name}': Animator found on '{animator.gameObject.name}'");
+        }
+
         if (target == null)
         {
             GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -72,34 +83,38 @@ public class EnemyShooter : MonoBehaviour
                 return;
             }
         }
-
-        nextShootTime = Time.time + shootDelay;
     }
 
     void Update()
     {
-        if (target == null || missilePrefab == null) return;
+        if (target == null || animator == null) return;
 
-        float dist = Vector3.Distance(transform.position, target.position);
+        // Calculate distance to player
+        float distance = Vector3.Distance(transform.position, target.position);
         
-        // Debug.Log($"Enemy: Distance to player = {dist:F1}, Detection Range = {detectionRange}");
+        // Set animator parameter based on detection range
+        bool isInRange = distance <= detectionRange;
+        animator.SetBool("IsRange", isInRange);
         
-        if (dist <= detectionRange && Time.time >= nextShootTime)
+        // DEBUG: Log status every 60 frames (sekitar 1 detik)
+        if (Time.frameCount % 60 == 0)
         {
-            ShootMissile();
-            nextShootTime = Time.time + shootInterval;
+            var currentState = animator.GetCurrentAnimatorStateInfo(0);
+            string stateName = currentState.IsName("Idle") ? "Idle" : currentState.IsName("Attack") ? "Attack" : "Unknown";
+            Debug.Log($"[{gameObject.name}] Distance: {distance:F1}, DetectionRange: {detectionRange}, IsInRange: {isInRange}, CurrentState: {stateName}, AnimatorEnabled: {animator.enabled}");
         }
     }
 
-    void ShootMissile()
+    // Called from Animation Event at the end of attack animation
+    public void SpawnMissile()
     {
-        if (missilePrefab == null || shootPoint == null) return;
+        if (missilePrefab == null || shootPoint == null || target == null) return;
         
         GameObject missile = Instantiate(missilePrefab, shootPoint.position, Quaternion.identity);
         
         // Pass target position to missile with height offset
         FireMissile fireMissile = missile.GetComponent<FireMissile>();
-        if (fireMissile != null && target != null)
+        if (fireMissile != null)
         {
             Vector3 targetPos = target.position + Vector3.up * targetHeightOffset;
             fireMissile.SetTarget(targetPos);
@@ -142,7 +157,6 @@ public class EnemyShooter : MonoBehaviour
     public void SetTarget(Transform newTarget) { target = newTarget; }
     public void ShootNow() 
     { 
-        ShootMissile();
-        nextShootTime = Time.time + shootInterval;
+        SpawnMissile();
     }
 }
