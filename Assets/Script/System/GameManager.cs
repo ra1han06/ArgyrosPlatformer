@@ -89,6 +89,17 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
+        // Check if this is a level reset from death (handled by LevelResetManager)
+        bool isDeathReset = LevelResetManager.Instance != null && LevelResetManager.Instance.IsResettingFromDeath();
+        
+        if (isDeathReset)
+        {
+            // LevelResetManager will handle timer restoration, skip initialization
+            if (showDebugLog)
+                Debug.Log($"[GameManager] Scene loaded from death reset: {scene.name} - LevelResetManager will handle initialization");
+            return;
+        }
+
         // Reset initialization flag untuk level baru
         hasInitialized = false;
 

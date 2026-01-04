@@ -65,10 +65,7 @@ public class RespawnManager : MonoBehaviour
         
         isDead = true;
         
-        // Increment death counter in GameManager
-        GameManager.Instance?.IncrementDeaths();
-        
-        Debug.Log("Player mati! Respawn dalam " + respawnDelay + " detik...");
+        Debug.Log("Player mati! Level akan di-reset untuk memberikan pengalaman fresh...");
         
         // Disable player control
         if (playerController != null)
@@ -82,8 +79,23 @@ public class RespawnManager : MonoBehaviour
             SetPlayerVisible(false);
         }
         
-        // Respawn setelah delay
-        Invoke(nameof(Respawn), respawnDelay);
+        // NEW: Use LevelResetManager for full level reset
+        // This will:
+        // 1. Increment death count
+        // 2. Save timer value
+        // 3. Reload scene (reset platforms, abilities, everything)
+        // 4. Restore timer and death count after reload
+        if (LevelResetManager.Instance != null)
+        {
+            LevelResetManager.Instance.HandlePlayerDeath();
+        }
+        else
+        {
+            Debug.LogError("LevelResetManager not found! Falling back to old respawn system.");
+            // Fallback to old system if LevelResetManager doesn't exist
+            GameManager.Instance?.IncrementDeaths();
+            Invoke(nameof(Respawn), respawnDelay);
+        }
     }
 
     private void Respawn()
