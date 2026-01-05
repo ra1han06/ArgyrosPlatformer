@@ -235,20 +235,13 @@ public class GameManager : MonoBehaviour
         if (introCam != null && introCam.enabled)
         {
             if (showDebugLog)
-                Debug.Log("[GameManager] IntroCameraSequence found! Waiting ~11 seconds for intro camera sequence to complete...");
+                Debug.Log("[GameManager] IntroCameraSequence found! Subscribing to OnSequenceComplete event...");
 
-            // Wait for intro camera sequence duration
-            // Total duration: focusFinish (1.4) + hold (0.35) + trace waypoints (6 waypoints * 1.0 + 6 * 0.2) + hold (0.35) + moveToPlayer (1.4)
-            // ≈ 1.4 + 0.35 + 6.0 + 1.2 + 0.35 + 1.4 = 10.7 seconds
-            // Add buffer = 11 seconds
-            yield return new WaitForSeconds(11f);
-
-            if (showDebugLog)
-                Debug.Log("[GameManager] ✅ Intro camera sequence finished (based on timer)!");
-
-            // Start timer immediately after intro camera
-            hasInitialized = true;
-            StartTimer();
+            // Subscribe ke event (intro akan invoke saat selesai, atau immediately jika skip)
+            IntroCameraSequence.OnSequenceComplete += OnIntroComplete;
+            
+            // Event akan trigger OnIntroComplete() yang start timer
+            // Tidak perlu yield wait atau delay, event-based!
             yield break;
         }
 
@@ -298,6 +291,22 @@ public class GameManager : MonoBehaviour
         }
 
         // Start timer otomatis
+        hasInitialized = true;
+        StartTimer();
+    }
+
+    /// <summary>
+    /// Callback ketika intro camera sequence selesai (atau di-skip)
+    /// </summary>
+    private void OnIntroComplete()
+    {
+        if (showDebugLog)
+            Debug.Log("[GameManager] 📹 OnIntroComplete event received! Starting timer...");
+        
+        // Unsubscribe immediately setelah dipanggil (one-time use)
+        IntroCameraSequence.OnSequenceComplete -= OnIntroComplete;
+        
+        // Start timer
         hasInitialized = true;
         StartTimer();
     }
@@ -650,6 +659,9 @@ public class GameManager : MonoBehaviour
     {
         // Unsubscribe dari scene load events untuk prevent memory leaks
         UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        
+        // Unsubscribe from intro camera event to prevent memory leak
+        IntroCameraSequence.OnSequenceComplete -= OnIntroComplete;
 
         if (showDebugLog)
             Debug.Log("[GameManager] Destroyed - event listeners cleaned up");

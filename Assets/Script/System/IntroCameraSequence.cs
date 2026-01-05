@@ -149,6 +149,21 @@ public class IntroCameraSequence : MonoBehaviour
     private Quaternion _initialRotation;
     private Vector3 _gameplayDelta;
 
+    /// <summary>
+    /// Check apakah intro harus diputar berdasarkan PlayerPrefs flag
+    /// </summary>
+    private bool ShouldPlayIntro()
+    {
+        if (GameManager.Instance == null)
+            return true; // Default: play intro if GameManager not found
+        
+        int currentLevel = GameManager.Instance.currentLevelIndex;
+        string introPlayedKey = $"IntroPlayed_Level{currentLevel}";
+        
+        // Return true jika belum pernah play (flag = 0)
+        return PlayerPrefs.GetInt(introPlayedKey, 0) == 0;
+    }
+
     private void Reset()
     {
         targetCamera = GetComponent<Camera>();
@@ -204,10 +219,27 @@ public class IntroCameraSequence : MonoBehaviour
     {
         Debug.Log("[IntroCameraSequence] Start() called. playOnStart = " + playOnStart);
         
-        if (playOnStart)
+        if (!playOnStart)
+            return;
+        
+        // Check apakah intro harus di-skip
+        if (!ShouldPlayIntro())
         {
-            TryPlay();
+            Debug.Log("[IntroCameraSequence] ⏭️ Intro already played before - skipping sequence!");
+            
+            // Skip intro: enable CameraFollow immediately
+            if (cameraFollow != null)
+                cameraFollow.enabled = true;
+            
+            // Invoke event untuk notify GameManager (timer bisa langsung start)
+            OnSequenceComplete?.Invoke();
+            
+            _played = true; // Mark as played to prevent TryPlay() from running
+            return;
         }
+        
+        // Intro belum pernah play, jalankan normal
+        TryPlay();
     }
 
     public void TryPlay()
@@ -306,6 +338,17 @@ public class IntroCameraSequence : MonoBehaviour
     yield return MoveAndFov(camT, playerPos, finalFov, moveToPlayerDuration);
 
         if (cameraFollow != null) cameraFollow.enabled = true;
+
+        // ✅ Set flag bahwa intro sudah pernah diputar
+        if (GameManager.Instance != null)
+        {
+            int currentLevel = GameManager.Instance.currentLevelIndex;
+            string introPlayedKey = $"IntroPlayed_Level{currentLevel}";
+            PlayerPrefs.SetInt(introPlayedKey, 1);
+            PlayerPrefs.Save();
+            
+            Debug.Log($"[IntroCameraSequence] 💾 Intro flag set: {introPlayedKey} = 1");
+        }
 
         // ✅ Intro camera sequence selesai - notify subscribers (GameManager)
         Debug.Log("[IntroCameraSequence] ✅ Sequence complete! Invoking OnSequenceComplete event...");

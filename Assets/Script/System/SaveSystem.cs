@@ -188,6 +188,12 @@ public static class SaveSystem
             PlayerPrefs.DeleteKey($"CutscenePlayed_Level{i}");
         }
 
+        // Hapus intro camera sequence flags
+        for (int i = 1; i <= 10; i++)
+        {
+            PlayerPrefs.DeleteKey($"IntroPlayed_Level{i}");
+        }
+
         // Hapus flags lainnya
         PlayerPrefs.DeleteKey("ShouldPlayCutscene");
         PlayerPrefs.DeleteKey("CutsceneLevel");
